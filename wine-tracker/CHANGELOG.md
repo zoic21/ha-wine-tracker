@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.2
+
+- **Interactive chart tooltips** — hover over donut segments, region bars, or drink window chart segments to see which wines are behind the numbers (name, vintage, quantity)
+- **Drink window filter** — filter the cellar view by drink window status (ready, not ready, past) with counts and section titles; filter auto-hides when no wines have drinking windows
+- **Drink window stacked bar chart** — new chart on the statistics page showing drinking windows grouped by year and wine type
+- **Mobile tooltip support** — tap to show, tap elsewhere to dismiss
+- **Fix Vivino SSL on all Home Assistant OS installations** — bundle Mozilla CA certificates via certifi so HTTPS connections work even when system certificates are incomplete
+- **Fix drink window subtitle position** — subtitle no longer overlaps the section border
+
 ## 1.1.1
 
 - **Drink window warnings** — red alert icon when a wine is past its drinking window, orange when in its last year
