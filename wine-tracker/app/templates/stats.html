@@ -106,6 +106,7 @@
             {% set gap = 1.2 %}
             {% set seg = pct - gap if pct > gap else pct %}
             <circle cx="50" cy="50" r="35"
+                    class="chart-hover" data-chart="type" data-key="{{ item['type'] }}"
                     fill="none" stroke="{{ type_colors[item['type']] or 'var(--wine-anderes)' }}"
                     stroke-width="12"
                     stroke-dasharray="{{ seg * 2.199 }} {{ 219.9 - seg * 2.199 }}"
@@ -122,7 +123,7 @@
         <div class="donut-legend">
           {% for item in by_type %}
           {% set pct = (item['qty'] / type_total * 100)|round|int if type_total > 0 else 0 %}
-          <div class="donut-legend-item">
+          <div class="donut-legend-item chart-hover" data-chart="type" data-key="{{ item['type'] }}">
             <span class="donut-dot" style="background:{{ type_colors[item['type']] or 'var(--wine-anderes)' }}"></span>
             <span class="donut-legend-label">{{ item['type'] | wine_type }}</span>
             <span class="donut-legend-value">{{ pct }}%</span>
@@ -142,7 +143,7 @@
         {% set region_total = top_regions|sum(attribute='qty') %}
         {% set max_region = top_regions[0]['qty'] if top_regions else 1 %}
         {% for item in top_regions %}
-        <div class="bar-item">
+        <div class="bar-item chart-hover" data-chart="region" data-key="{{ item['region'] }}">
           <div class="bar-label" title="{{ item['region'] }}">{{ item['region'] }}</div>
           <div class="bar-track">
             <div class="bar-fill" style="width: {{ (item['qty'] / max_region * 100)|round }}%"></div>
@@ -156,6 +157,56 @@
   {% endif %}
 
 </div>
+
+
+<!-- ═══════ DRINK WINDOW CHART ═══════ -->
+{% if dw_chart %}
+{% set type_colors = {
+  'Rotwein': 'var(--wine-rotwein)', 'Weisswein': 'var(--wine-weisswein)',
+  'Rosé': 'var(--wine-rose)', 'Schaumwein': 'var(--wine-schaumwein)',
+  'Dessertwein': 'var(--wine-dessertwein)', 'Likörwein': 'var(--wine-likoerwein)',
+  'Anderes': 'var(--wine-anderes)'
+} %}
+<div class="stat-grid">
+  <div class="stat-card dw-chart-card">
+    <h2><i class="mdi mdi-calendar-range"></i> {{ t.stat_drink_windows }}</h2>
+    <div class="stat-body">
+      <p class="stat-subtitle">{{ t.stat_dw_subtitle }}</p>
+      {% set ns = namespace(max_total=0) %}
+      {% for item in dw_chart %}
+        {% set row_total = item.counts.values() | sum %}
+        {% if row_total > ns.max_total %}{% set ns.max_total = row_total %}{% endif %}
+      {% endfor %}
+      <div class="dw-chart">
+        {% for item in dw_chart %}
+        <div class="dw-bar-col{% if item.year == current_year %} dw-current{% endif %}">
+          <div class="dw-bar-stack">
+            {% for type_name in dw_type_order %}
+            {% if item.counts.get(type_name, 0) > 0 %}
+            {% set h = (item.counts[type_name] / ns.max_total * 100) | round %}
+            <div class="dw-bar-seg chart-hover"
+                 data-chart="dw" data-year="{{ item.year }}" data-key="{{ type_name }}"
+                 style="height:{{ h }}%; background:{{ type_colors.get(type_name, 'var(--wine-anderes)') }}">
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+          <div class="dw-bar-label">{{ item.year }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="dw-legend">
+        {% for type_name in dw_type_order %}
+        <span class="dw-legend-item">
+          <span class="donut-dot" style="background:{{ type_colors.get(type_name, 'var(--wine-anderes)') }}"></span>
+          {{ type_name | wine_type }}
+        </span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 
 <!-- ═══════ LISTS ═══════ -->
@@ -257,6 +308,114 @@
 
 {% endif %}
 </div>
+
+<!-- Tooltip data + component -->
+<div id="chartTooltip" class="chart-tooltip">
+  <div class="chart-tooltip-header"></div>
+  <div class="chart-tooltip-list"></div>
+</div>
+
+<script>
+var WINE_DATA = {
+  byType: {{ wines_by_type | tojson }},
+  byRegion: {{ wines_by_region | tojson }},
+  byDW: {{ dw_wine_names | tojson }}
+};
+var WINE_TYPE_NAMES = {{ type_translations | tojson }};
+var TOOLTIP_MORE = {{ t.stat_tooltip_more | tojson }};
+
+(function() {
+  var tip = document.getElementById('chartTooltip');
+  if (!tip) return;
+  var header = tip.querySelector('.chart-tooltip-header');
+  var list = tip.querySelector('.chart-tooltip-list');
+  var MAX_SHOW = 12;
+  var activeEl = null;
+
+  function getWines(el) {
+    var chart = el.dataset.chart;
+    var key = el.dataset.key;
+    if (chart === 'type') return { title: WINE_TYPE_NAMES[key] || key, wines: WINE_DATA.byType[key] || [] };
+    if (chart === 'region') return { title: key, wines: WINE_DATA.byRegion[key] || [] };
+    if (chart === 'dw') {
+      var yr = el.dataset.year;
+      var dwYear = WINE_DATA.byDW[yr] || {};
+      return { title: (WINE_TYPE_NAMES[key] || key) + ' · ' + yr, wines: dwYear[key] || [] };
+    }
+    return null;
+  }
+
+  function showTip(el) {
+    var data = getWines(el);
+    if (!data || !data.wines.length) return;
+    header.textContent = data.title;
+    var html = '';
+    var wines = data.wines;
+    var show = wines.slice(0, MAX_SHOW);
+    for (var i = 0; i < show.length; i++) {
+      var w = show[i];
+      var name = w.n + (w.y ? ' ' + w.y : '');
+      var qty = w.q > 1 ? w.q + '×' : '';
+      html += '<div class="chart-tooltip-item"><span class="tt-name">' + name + '</span>';
+      if (qty) html += '<span class="tt-qty">' + qty + '</span>';
+      html += '</div>';
+    }
+    if (wines.length > MAX_SHOW) {
+      html += '<div class="chart-tooltip-more">' + TOOLTIP_MORE.replace('{}', wines.length - MAX_SHOW) + '</div>';
+    }
+    list.innerHTML = html;
+    tip.style.display = 'block';
+    activeEl = el;
+  }
+
+  function moveTip(e) {
+    if (tip.style.display === 'none') return;
+    var x = e.clientX + 14;
+    var y = e.clientY + 14;
+    var tw = tip.offsetWidth;
+    var th = tip.offsetHeight;
+    if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 10;
+    if (y + th > window.innerHeight - 8) y = e.clientY - th - 10;
+    if (x < 4) x = 4;
+    if (y < 4) y = 4;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+
+  function hideTip() {
+    tip.style.display = 'none';
+    activeEl = null;
+  }
+
+  // Attach events via delegation
+  document.addEventListener('mouseover', function(e) {
+    var el = e.target.closest('.chart-hover');
+    if (el && el !== activeEl) showTip(el);
+  });
+  document.addEventListener('mousemove', moveTip);
+  document.addEventListener('mouseout', function(e) {
+    var el = e.target.closest('.chart-hover');
+    if (el && el === activeEl) {
+      var related = e.relatedTarget;
+      if (!related || !el.contains(related)) hideTip();
+    }
+  });
+
+  // Mobile: tap to show, tap elsewhere to dismiss
+  document.addEventListener('touchstart', function(e) {
+    var el = e.target.closest('.chart-hover');
+    if (el) {
+      e.preventDefault();
+      if (el === activeEl) { hideTip(); return; }
+      showTip(el);
+      var touch = e.touches[0];
+      moveTip({ clientX: touch.clientX, clientY: touch.clientY });
+    } else {
+      hideTip();
+    }
+  }, { passive: false });
+})();
+</script>
 
 <script type="module">
 // ── COBE 3D Globe ────────────────────────────────────────────────────────────

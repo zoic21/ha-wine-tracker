@@ -668,6 +668,57 @@ def stats_page():
     in_stock = db.execute("SELECT SUM(quantity) FROM wines WHERE quantity > 0").fetchone()[0] or 0
     out_of_stock = db.execute("SELECT COUNT(*) FROM wines WHERE quantity = 0").fetchone()[0] or 0
 
+    # Drink window chart – bottles per year, stacked by type
+    from collections import defaultdict
+    dw_wines = [dict(r) for r in db.execute(
+        "SELECT name, year, type, quantity, drink_from, drink_until FROM wines "
+        "WHERE drink_until IS NOT NULL AND drink_until != '' AND quantity > 0"
+    ).fetchall()]
+    dw_by_year = defaultdict(lambda: defaultdict(int))
+    dw_names_by_year = defaultdict(lambda: defaultdict(list))
+    dw_types = set()
+    for w in dw_wines:
+        try:
+            until = int(w["drink_until"])
+            frm = int(w["drink_from"]) if w.get("drink_from") else until
+            t = w["type"] or "Anderes"
+            dw_types.add(t)
+            entry = {"n": w["name"], "y": w.get("year"), "q": w["quantity"]}
+            for yr in range(frm, until + 1):
+                dw_by_year[yr][t] += w["quantity"]
+                dw_names_by_year[yr][t].append(entry)
+        except (ValueError, TypeError):
+            pass
+    if dw_by_year:
+        dw_chart = [{"year": yr, "counts": dict(dw_by_year[yr])}
+                    for yr in range(min(dw_by_year), max(dw_by_year) + 1)]
+        dw_type_order = sorted(dw_types)
+        dw_wine_names = {str(yr): {t: wl for t, wl in types.items()}
+                         for yr, types in dw_names_by_year.items()}
+    else:
+        dw_chart = []
+        dw_type_order = []
+        dw_wine_names = {}
+
+    # Tooltip data – wine names grouped by type and region
+    wines_by_type = {}
+    for row in db.execute(
+        "SELECT name, year, type, quantity FROM wines "
+        "WHERE type IS NOT NULL AND type != '' AND quantity > 0 ORDER BY name"
+    ).fetchall():
+        wines_by_type.setdefault(row["type"], []).append(
+            {"n": row["name"], "y": row["year"], "q": row["quantity"]})
+
+    wines_by_region = {}
+    for row in db.execute(
+        "SELECT name, year, region, quantity FROM wines "
+        "WHERE region IS NOT NULL AND region != '' AND quantity > 0 ORDER BY name"
+    ).fetchall():
+        wines_by_region.setdefault(row["region"], []).append(
+            {"n": row["name"], "y": row["year"], "q": row["quantity"]})
+
+    type_translations = {t: T.get(f"wine_type_{t}", t) for t in WINE_TYPES}
+
     return render_template(
         "stats.html",
         totals=totals,
@@ -684,6 +735,13 @@ def stats_page():
         recent=recent,
         in_stock=in_stock,
         out_of_stock=out_of_stock,
+        dw_chart=dw_chart,
+        dw_type_order=dw_type_order,
+        dw_wine_names=dw_wine_names,
+        wines_by_type=wines_by_type,
+        wines_by_region=wines_by_region,
+        type_translations=type_translations,
+        current_year=current_year,
     )
 
 

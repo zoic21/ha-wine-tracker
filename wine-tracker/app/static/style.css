@@ -721,6 +721,64 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
   width: 50px; text-align: right; flex-shrink: 0;
 }
 
+/* ── Stats: Drink Window Chart ───────────────────────────────────────────── */
+.dw-chart-card { grid-column: 1 / -1; }
+.stat-subtitle { color: var(--muted); font-size: .85rem; margin: .4rem 0 .75rem 1.1rem; }
+.dw-chart {
+  display: flex; align-items: flex-end; gap: 6px;
+  height: 200px; padding: 0 .5rem;
+  border-bottom: 1px solid var(--border);
+}
+.dw-bar-col {
+  flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0;
+  height: 100%;
+}
+.dw-bar-stack {
+  width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  border-radius: 4px 4px 0 0; overflow: hidden;
+}
+.dw-bar-seg { min-height: 2px; transition: height .4s ease; }
+.dw-bar-label { font-size: .72rem; color: var(--muted); margin-top: 6px; white-space: nowrap; }
+.dw-current .dw-bar-label { color: var(--accent); font-weight: 700; }
+.dw-current .dw-bar-stack { box-shadow: 0 0 0 1.5px var(--accent); }
+.dw-legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1rem; font-size: .78rem; }
+.dw-legend-item { display: flex; align-items: center; gap: .3rem; }
+
+/* ── Stats: Chart Tooltip ────────────────────────────────────────────────────── */
+.chart-tooltip {
+  position: fixed; z-index: 500;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: .6rem .8rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  pointer-events: none; max-width: 280px; max-height: 300px;
+  overflow-y: auto; font-size: .82rem;
+  display: none;
+}
+.chart-tooltip-header {
+  font-weight: 700; font-size: .85rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: .35rem; margin-bottom: .35rem;
+}
+.chart-tooltip-list { display: flex; flex-direction: column; gap: .15rem; }
+.chart-tooltip-item {
+  display: flex; justify-content: space-between; gap: .5rem;
+  line-height: 1.35;
+}
+.chart-tooltip-item .tt-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1; min-width: 0;
+}
+.chart-tooltip-item .tt-qty { color: var(--muted); flex-shrink: 0; font-size: .78rem; }
+.chart-tooltip-more { color: var(--muted); font-style: italic; font-size: .78rem; margin-top: .2rem; }
+
+/* Hover feedback on interactive chart elements */
+.chart-hover { cursor: pointer; }
+.dw-bar-seg.chart-hover:hover { filter: brightness(1.2); }
+.bar-item.chart-hover:hover .bar-fill { filter: brightness(1.2); }
+.donut-svg-wrap circle.chart-hover { pointer-events: stroke; }
+.donut-svg-wrap circle.chart-hover:hover { filter: brightness(1.15) drop-shadow(0 0 3px rgba(255,255,255,.2)); }
+.donut-legend-item.chart-hover:hover { background: var(--bg); border-radius: 6px; }
+
 /* ── Stats: Wine List ──────────────────────────────────────────────────────── */
 .wine-list { display: flex; flex-direction: column; gap: .6rem; }
 .wine-list-item {
