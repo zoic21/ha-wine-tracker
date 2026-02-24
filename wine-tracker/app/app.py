@@ -261,13 +261,14 @@ def init_db():
         # Migrate existing DBs – add columns if missing
         existing = {row[1] for row in db.execute("PRAGMA table_info(wines)")}
         migrations = {
-            "purchased_at": "TEXT",
-            "price":        "REAL",
-            "drink_from":   "INTEGER",
-            "drink_until":  "INTEGER",
-            "location":     "TEXT",
-            "grape":        "TEXT",
-            "vivino_id":    "INTEGER",
+            "purchased_at":   "TEXT",
+            "price":          "REAL",
+            "drink_from":     "INTEGER",
+            "drink_until":    "INTEGER",
+            "location":       "TEXT",
+            "grape":          "TEXT",
+            "vivino_id":      "INTEGER",
+            "bottle_format":  "REAL DEFAULT 0.75",
         }
         for col, dtype in migrations.items():
             if col not in existing:
@@ -440,11 +441,12 @@ def add():
             image = ai_img
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
+    bottle_format_raw = request.form.get("bottle_format", "").strip()
     cur = db.execute(
         """INSERT INTO wines
            (name, year, type, region, quantity, rating, notes, image, added,
-            purchased_at, price, drink_from, drink_until, location, grape, vivino_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             request.form["name"].strip(),
             request.form.get("year") or None,
@@ -462,6 +464,7 @@ def add():
             request.form.get("location", "").strip() or None,
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
+            float(bottle_format_raw) if bottle_format_raw else 0.75,
         ),
     )
     db.commit()
@@ -509,10 +512,11 @@ def edit(wine_id):
 
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
+    bottle_format_raw = request.form.get("bottle_format", "").strip()
     db.execute(
         """UPDATE wines SET name=?, year=?, type=?, region=?, quantity=?, rating=?,
            notes=?, image=?, purchased_at=?, price=?, drink_from=?, drink_until=?, location=?,
-           grape=?, vivino_id=?
+           grape=?, vivino_id=?, bottle_format=?
            WHERE id=?""",
         (
             request.form["name"].strip(),
@@ -530,6 +534,7 @@ def edit(wine_id):
             request.form.get("location", "").strip() or None,
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
+            float(bottle_format_raw) if bottle_format_raw else 0.75,
             wine_id,
         ),
     )
@@ -560,8 +565,8 @@ def duplicate(wine_id):
 
     db.execute(
         """INSERT INTO wines (name, year, type, region, quantity, rating, notes, image, added,
-           purchased_at, price, drink_from, drink_until, location, grape, vivino_id)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             wine["name"],
             new_year,
@@ -579,6 +584,7 @@ def duplicate(wine_id):
             wine["location"],
             wine["grape"],
             wine["vivino_id"],
+            wine.get("bottle_format", 0.75),
         ),
     )
     db.commit()
@@ -639,6 +645,11 @@ def stats_page():
         coords = geocode_region(r["region"])
         if coords:
             map_points.append({"region": r["region"], "qty": r["qty"], "lat": coords[0], "lon": coords[1]})
+
+    # Total liters (quantity * bottle_format)
+    total_liters = db.execute(
+        "SELECT SUM(quantity * COALESCE(bottle_format, 0.75)) as liters FROM wines"
+    ).fetchone()["liters"] or 0
 
     # Total value
     value = db.execute(
@@ -739,6 +750,7 @@ def stats_page():
     return render_template(
         "stats.html",
         totals=totals,
+        total_liters=total_liters,
         by_type=by_type,
         top_regions=top_regions,
         map_points=map_points,
@@ -890,13 +902,15 @@ def analyze_wine():
   "price": number or null,
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
-  "notes": "brief tasting notes if visible on label"
+  "notes": "brief tasting notes if visible on label",
+  "bottle_format": number or null
 }}
 Rules:
 - wine_type MUST be exactly one of the listed values
 - vintage must be a 4-digit year or null
 - drink_from/drink_until: drinking window years. If mentioned on label, use those. Otherwise ESTIMATE a reasonable drinking window based on the wine type, grape variety, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null if not visible
+- bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
 - If a field cannot be determined, set it to null or empty string
 - The "notes" field MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""
@@ -1097,7 +1111,8 @@ def _wine_json_schema():
   "price": number or null,
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
-  "notes": "brief tasting notes"
+  "notes": "brief tasting notes",
+  "bottle_format": number or null
 }"""
 
 
@@ -1110,6 +1125,7 @@ def _wine_json_rules(lang="en"):
 - vintage must be a 4-digit year or null
 - drink_from/drink_until: estimate a reasonable drinking window based on wine type, grape, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null
+- bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
 - If a field cannot be determined, set it to null or empty string
 - The "notes" field MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""

@@ -48,6 +48,14 @@
     <div class="label">{{ t.stat_wine_singular if total_wines == 1 else t.stat_different_wines }}</div>
   </div>
 
+  {% if total_liters > 0 %}
+  <div class="highlight-card">
+    <div class="emoji"><i class="mdi mdi-cup-water"></i></div>
+    <div class="big-number">{{ "%.1f"|format(total_liters) }}</div>
+    <div class="label">{{ t.stat_total_liters }}</div>
+  </div>
+  {% endif %}
+
   {% if value and value['total_value'] %}
   <div class="highlight-card">
     <div class="emoji"><i class="mdi mdi-cash-multiple"></i></div>

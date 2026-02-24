@@ -86,7 +86,8 @@
        data-drink_from="{{ w['drink_from'] or '' }}" data-drink_until="{{ w['drink_until'] or '' }}"
        data-location="{{ w['location'] or '' }}"
        data-grape="{{ w['grape'] or '' }}"
-       data-vivino_id="{{ w['vivino_id'] or '' }}">
+       data-vivino_id="{{ w['vivino_id'] or '' }}"
+       data-bottle_format="{{ w['bottle_format'] or '0.75' }}">
 
     {% if w['quantity'] == 0 %}
       <div class="ribbon ribbon-empty">{{ t.ribbon_empty }}</div>
@@ -301,14 +302,31 @@
           </div>
         </div>
 
-        <div>
-          <label>{{ t.label_grape }}</label>
-          <input type="text" name="grape" id="wine_grape" placeholder="{{ t.placeholder_grape }}" list="grapeList" autocomplete="off">
-          <datalist id="grapeList">
-            {% for g in used_grapes %}
-            <option value="{{ g }}">
-            {% endfor %}
-          </datalist>
+        <div class="row2">
+          <div>
+            <label>{{ t.label_grape }}</label>
+            <input type="text" name="grape" id="wine_grape" placeholder="{{ t.placeholder_grape }}" list="grapeList" autocomplete="off">
+            <datalist id="grapeList">
+              {% for g in used_grapes %}
+              <option value="{{ g }}">
+              {% endfor %}
+            </datalist>
+          </div>
+          <div>
+            <label>{{ t.label_bottle_format }}</label>
+            <select name="bottle_format" id="wine_bottle_format">
+              <option value="0.1875">Piccolo (0.1875 l)</option>
+              <option value="0.375">Demi (0.375 l)</option>
+              <option value="0.75" selected>Standard (0.75 l)</option>
+              <option value="1.5">Magnum (1.5 l)</option>
+              <option value="3">Double Magnum (3 l)</option>
+              <option value="4.5">Jeroboam (4.5 l)</option>
+              <option value="6">Imperial (6 l)</option>
+              <option value="9">Salmanazar (9 l)</option>
+              <option value="12">Balthazar (12 l)</option>
+              <option value="15">Nebuchadnezzar (15 l)</option>
+            </select>
+          </div>
         </div>
 
         <div>
@@ -791,6 +809,7 @@ var _placeholders = {};
   var el = document.getElementById(id);
   if (el) _placeholders[id] = el.placeholder || '';
 });
+// bottle_format is a select, no placeholder needed
 
 function openWineModal(id, wine) {
   _reloadMode = false;
@@ -826,6 +845,7 @@ function openWineModal(id, wine) {
   document.getElementById('wine_drink_until').value = w.drink_until || '';
   document.getElementById('wine_location').value = w.location || '';
   document.getElementById('wine_grape').value = w.grape || '';
+  document.getElementById('wine_bottle_format').value = w.bottle_format || '0.75';
   document.getElementById('wine_vivino_id').value = w.vivino_id || '';
 
   // Stars
@@ -1207,6 +1227,7 @@ function populateFormFromAi(fields, imageFilename) {
   if (fields.drink_from) document.getElementById('wine_drink_from').value = fields.drink_from;
   if (fields.drink_until) document.getElementById('wine_drink_until').value = fields.drink_until;
   if (fields.notes) document.getElementById('wine_notes').value = fields.notes;
+  if (fields.bottle_format) document.getElementById('wine_bottle_format').value = fields.bottle_format;
 
   // Set the AI image hidden field
   if (imageFilename) {
@@ -1249,7 +1270,7 @@ var wineFormSnapshot = '';
 function getWineFormState() {
   var fields = ['wine_name','wine_year','wine_qty','wine_type','wine_region',
                 'wine_notes','wine_purchased_at','wine_price','wine_drink_from',
-                'wine_drink_until','wine_location','wine_grape'];
+                'wine_drink_until','wine_location','wine_grape','wine_bottle_format'];
   var parts = fields.map(function(id) { return document.getElementById(id).value; });
   // Stars
   for (var i = 1; i <= 5; i++) {
@@ -1287,6 +1308,7 @@ function getCardData(el) {
     drink_until: d.drink_until ? parseInt(d.drink_until) : null,
     location: d.location || null,
     grape: d.grape || null,
+    bottle_format: d.bottle_format ? parseFloat(d.bottle_format) : 0.75,
     vivino_id: d.vivino_id ? parseInt(d.vivino_id) : null
   }};
 }
@@ -1344,6 +1366,11 @@ function populateFormMerge(fields, imageFilename) {
   setIfEmpty('wine_drink_from', fields.drink_from);
   setIfEmpty('wine_drink_until', fields.drink_until);
   setIfEmpty('wine_notes', fields.notes);
+  // Only update bottle_format if AI detected a non-standard size
+  if (fields.bottle_format && fields.bottle_format != 0.75) {
+    document.getElementById('wine_bottle_format').value = fields.bottle_format;
+    filled++;
+  }
 
   // Set star rating only if none is selected
   if (fields.rating) {
@@ -1706,6 +1733,7 @@ function updateCardData(card, w) {
   card.dataset.drink_until = w.drink_until || '';
   card.dataset.location = w.location || '';
   card.dataset.grape = w.grape || '';
+  card.dataset.bottle_format = w.bottle_format || '0.75';
   card.dataset.vivino_id = w.vivino_id || '';
   card.classList.toggle('empty', w.quantity == 0);
 }
@@ -1788,6 +1816,7 @@ function changeQty(el, delta) {
   fd.append('drink_until', d.drink_until);
   fd.append('location', d.location);
   fd.append('grape', d.grape);
+  fd.append('bottle_format', d.bottle_format || '0.75');
   fd.append('vivino_id', d.vivino_id || '');
 
   // Optimistic UI update

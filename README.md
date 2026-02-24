@@ -39,10 +39,12 @@ A sleek, modern wine cellar tracker running as a Home Assistant add-on. Manage y
 - **Photo upload** — snap a label photo from your phone
 - **AI wine label recognition** — snap a label photo and let AI fill in all fields (supports 4 AI providers)
 - **Vivino wine search** — search by name, see ratings, region & price, and import directly
+- **Vivino ID management** — view, edit & test Vivino wine links directly in the edit modal
 - **Reload missing data** — re-analyze wines with incomplete fields via AI or Vivino
 - **Star rating** (1–5 stars)
 - **Quick quantity buttons** (+/−) directly on the card
 - **Duplicate wines** — perfect when only the vintage changes
+- **Bottle format** — track bottle sizes from Piccolo (0.1875l) to Nebuchadnezzar (15l), auto-detected by AI from label photos
 - **Empty bottles** stay visible as placeholders (toggle to hide)
 - **Search & filter** by wine type
 - **Drink window** (from/until year)
@@ -51,7 +53,7 @@ A sleek, modern wine cellar tracker running as a Home Assistant add-on. Manage y
 - **Region & purchase source** autocomplete from existing entries
 - **Grape variety** (e.g. Merlot, Pinot Noir, Chardonnay) with autocomplete
 - **Interactive globe** — see your wine regions on a 3D globe (COBE)
-- **Statistics** — donut charts for wine types + total bottle count
+- **Statistics** — donut charts, total bottles, total liters, value overview & average age
 - **Multi-language** — 7 languages supported
 - **HA Ingress** — embedded directly in the Home Assistant sidebar
 - **REST API** at `/api/summary` for HA sensors
@@ -160,7 +162,8 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 | `drink_from` | Integer | Drink window start (year) |
 | `drink_until` | Integer | Drink window end (year) |
 | `location` | Text | Storage location |
-| `vivino_id` | Integer | Vivino vintage ID (linked when imported via Vivino search) |
+| `vivino_id` | Integer | Vivino wine ID (linked when imported via Vivino search) |
+| `bottle_format` | Real | Bottle size in liters (default: 0.75) |
 
 ## Technology
 
@@ -176,14 +179,13 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 - Export / Import function
 - Custom sorting options
 - Display modes — list view or portal
-- Drinking-Window statistic
-- Wine's clickable on the statistics
+- Wines clickable on the statistics
 
 ## License
 
 MIT
 
-[version-badge]: https://img.shields.io/badge/version-v1.1.4-blue.svg
+[version-badge]: https://img.shields.io/badge/version-v1.2.0-blue.svg
 [stage-badge]: https://img.shields.io/badge/project%20stage-stable-brightgreen.svg
 [maintained-badge]: https://img.shields.io/badge/maintained-yes-brightgreen.svg
 [license-badge]: https://img.shields.io/badge/license-MIT-green.svg

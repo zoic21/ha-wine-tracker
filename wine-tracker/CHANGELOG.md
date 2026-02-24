@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0
+
+- **Bottle format support** — track different wine bottle sizes from Piccolo (0.1875L) to Nebuchadnezzar (15L) with a new dropdown in the wine form
+- **AI bottle size detection** — AI label recognition now detects bottle format from the label photo when clearly visible
+- **Total liters statistic** — new highlight card on the statistics page showing total liters in your cellar, calculated from quantity × bottle size
+- **Compact stats layout** — all five highlight cards now fit in a single row on desktop
+- **2-column form layout** — grape variety and bottle format sit side-by-side for better space usage
+- **Database migration** — existing wines automatically set to standard 0.75L bottles
+- **Multilingual** — bottle format labels and total liters translated for all 7 languages
+
 ## 1.1.4
 
 - **Improved SSL certificate handling** — force-reinstall requests, urllib3, and certifi packages to ensure reliable HTTPS connections to Vivino

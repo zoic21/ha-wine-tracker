@@ -27,15 +27,17 @@ A sleek, modern wine cellar tracker running directly in your Home Assistant side
 - **Wine cards** with photo, vintage, type, region, grape variety, rating & notes
 - **AI wine label recognition** — snap a label photo and let AI fill in all fields (Anthropic, OpenAI, OpenRouter, Ollama)
 - **Vivino wine search** — search by name, see ratings, region & price, and import directly
+- **Vivino ID management** — view, edit & test Vivino wine links directly in the edit modal
 - **Reload missing data** — re-analyze wines with incomplete fields via AI or Vivino
 - **Star rating** (1–5 stars), quick quantity buttons & duplicate wines
+- **Bottle format** — track bottle sizes from Piccolo (0.1875l) to Nebuchadnezzar (15l), auto-detected by AI
 - **Unified navigation** — consistent header with filter dropdown across all pages
 - **Search & filter** by wine type (Red, White, Rosé, Sparkling, ...)
 - **Drink window** (from/until year) with AI estimation
 - **Purchase price** with configurable currency
 - **Autocomplete** for region, grape variety, purchase source & storage location
 - **Interactive 3D globe** showing your wine regions on a WebGL globe
-- **Statistics** — donut charts, country breakdown, price overview & bottle count
+- **Statistics** — donut charts, total bottles, total liters, value overview & average age
 - **7 languages**: DE, EN, FR, IT, ES, PT, NL
 - **REST API** at `/api/summary` for HA sensor integration
 - **Fully responsive** — desktop, tablet & mobile
@@ -66,5 +68,5 @@ All data (SQLite database + photos) is stored under `/share/wine-tracker/` — p
 
 See the full documentation and changelog on [GitHub](https://github.com/xenofex7/ha-wine-tracker).
 
-[version-badge]: https://img.shields.io/badge/version-v1.1.4-blue.svg
+[version-badge]: https://img.shields.io/badge/version-v1.2.0-blue.svg
 [ai-badge]: https://img.shields.io/badge/AI%20powered-label%20recognition-blueviolet.svg
