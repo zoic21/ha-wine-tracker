@@ -1554,9 +1554,9 @@ function reloadViaVivino() {
       if (item.price) fields.price = item.price;
       if (item.rating) fields.rating = item.rating;
 
-      // Set vivino_id if empty
+      // Always update vivino_id (fixes old wines with wrong vintage ID)
       var vivinoField = document.getElementById('wine_vivino_id');
-      if (vivinoField && !vivinoField.value && item.vivino_id) {
+      if (vivinoField && item.vivino_id) {
         vivinoField.value = item.vivino_id;
       }
 

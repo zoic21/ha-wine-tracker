@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4
+
+- **Improved SSL certificate handling** — force-reinstall requests, urllib3, and certifi packages to ensure reliable HTTPS connections to Vivino
+- **SSL debug logging** — certificate path detection now logs to console for easier troubleshooting
+- **Fix Vivino ID reload bug** — reload via Vivino now always updates the wine ID, fixing wines with wrong vintage IDs from previous searches
+
 ## 1.1.3
 
 - **No more theme flicker** — switching between Cellar and Statistics no longer flashes dark mode; an inline script applies your theme before the first paint

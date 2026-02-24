@@ -56,12 +56,17 @@ def _ssl_verify():
     """Return best available CA bundle for requests verify parameter."""
     try:
         import certifi
-        return certifi.where()
+        path = certifi.where()
+        print(f"[SSL] Using certifi: {path}, exists={os.path.exists(path)}")
+        return path
     except ImportError:
+        print("[SSL] certifi not available, falling back to system certs")
         for p in ("/etc/ssl/certs/ca-certificates.crt", "/etc/ssl/cert.pem"):
             if os.path.exists(p):
+                print(f"[SSL] Using system cert: {p}")
                 return p
-        return True  # requests default
+        print("[SSL] No CA bundle found, using requests default")
+        return True
 
 
 HA_OPTIONS = load_options()
