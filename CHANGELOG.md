@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.1
+
+- **Inline stats editing** — click any wine in the statistics page (tooltip links, best rated, price overview, recently added) to open the edit modal right there — no more navigating away to the cellar
+- **Wine API endpoint** — new `/api/wine/<id>` endpoint returns full wine data as JSON, powering the inline edit on stats
+- **Clickable chart tooltips** — tooltip wine names are now links that open the edit modal directly
+- **Shared modal code** — extracted duplicated HTML into Jinja partials (`_settings_modal`, `_wine_form_fields`) and shared JS into `wine-modal.js`, eliminating ~380 lines of duplicated code
+- **Shimmer loading for images** — wine card images now show a diagonal shimmer animation while loading, with a smooth fade-in once ready; shimmer color adapts to your active theme
+- **Fix highlight stacking** — editing multiple wines in a row no longer leaves all of them glowing; only the most recently saved card gets highlighted
+- **Fix tooltip over modal on mobile** — chart tooltips now hide when opening the edit modal, so they don't float over the form
+- **111 tests** — 8 new tests covering the wine API endpoint, stats modal presence, tooltip links, and edit parameter handling
+
 ## 1.3.0
 
 - **Settings modal** — new gear icon in the header opens a dedicated settings panel (replaces the old theme-cycle button)
