@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.0
+
+- **AI Sommelier chat** — ask your personal sommelier for food pairings, serving temperatures, or bottle recommendations — it knows every wine in your cellar and responds in your language
+- **Multi-provider chat** — works with Anthropic, OpenAI, OpenRouter, and Ollama (same providers as label recognition)
+- **Markdown responses** — the sommelier formats answers with bold text, lists, and headings for easy reading
+- **Session persistence** — chat history survives page navigation via sessionStorage, so you can switch between cellar and stats without losing the conversation
+- **Chat in header navigation** — clean ghost icon next to settings instead of a floating bubble
+- **Scroll lock** — background stays put while the chat panel is open
+- **Style guide** — new `STYLE_GUIDE.md` documents all UI decisions (colors, radii, spacing, typography)
+- **CSS consistency pass** — theme-aware hovers, standardized border-radii, and element sizing across all components
+- **121 tests** — 10 new tests covering chat endpoint, history validation, provider errors, and wine context building
+
 ## 1.3.1
 
 - **Inline stats editing** — click any wine in the statistics page (tooltip links, best rated, price overview, recently added) to open the edit modal right there — no more navigating away to the cellar
