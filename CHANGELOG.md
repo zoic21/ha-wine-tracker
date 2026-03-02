@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.3.0
+
+- **Settings modal** — new gear icon in the header opens a dedicated settings panel (replaces the old theme-cycle button)
+- **6 color themes** — choose from Classic, Vineyard, Champagne, Slate, Burgundy, and the new Home Assistant theme with cyan-blue and orange accents
+- **Light / Dark / System mode** — pick your preferred mode with a segmented control inside settings
+- **Home Assistant theme** — color scheme based on official HA design tokens for a native look
+- **Favicon** — the wine tracker logo now appears in your browser tab
+- **Logo on empty cellar** — the empty-state screen shows the Wine Tracker logo instead of a generic wine glass icon
+- **Add-on README** — the Info tab in Home Assistant now shows project badges, features, and a link to the GitHub repo
+- **Scrollbar styling** — thin, themed scrollbars across all views
+- **Globe centering** — the 3D globe now centers on the longitude of your biggest wine region instead of a fixed Europe offset
+- **Security hardening** — XSS escaping in wine cards, SSRF protection on the Vivino image proxy, upload path validation with extension allowlist
+- **Dockerfile cleanup** — dependencies now installed from `requirements.txt` instead of inline `pip install`
+- **103 tests** — new tests for path traversal, SSRF protection, and disallowed file extensions
+
 ## 1.2.1
 
 - **Fix drink window color on duplicate/add/edit** — drink window badges now show the correct color (green/orange/red) immediately after AJAX operations instead of requiring a page reload
