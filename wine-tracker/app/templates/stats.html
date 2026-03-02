@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7/css/materialdesignicons.min.css">
 <link rel="stylesheet" href="{{ ingress }}/static/style.css">
 <script>
@@ -349,49 +350,57 @@
       <span data-theme-labels='{"classic":"{{ t.theme_classic }}","vineyard":"{{ t.theme_vineyard }}","champagne":"{{ t.theme_champagne }}","slate":"{{ t.theme_slate }}","burgundy":"{{ t.theme_burgundy }}"}'  style="display:none"></span>
 
       <div class="settings-section">
-        <div class="settings-section-label">{{ t.settings_theme }}</div>
-        <div class="theme-dropdown">
-          <button type="button" class="theme-dropdown-btn" onclick="toggleThemeDropdown(event)">
-            <span class="theme-dots"></span>
-            <span class="dd-label">Classic</span>
-            <i class="mdi mdi-chevron-down dd-arrow"></i>
-          </button>
-          <div class="theme-dropdown-list">
-            <div class="theme-dropdown-item" data-theme="classic" onclick="setThemeName('classic')">
-              <span class="theme-dots"><span class="theme-dot" style="background:#1a0a0f"></span><span class="theme-dot" style="background:#c0392b"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-              <span>{{ t.theme_classic }}</span>
-              <i class="mdi mdi-check dd-check"></i>
-            </div>
-            <div class="theme-dropdown-item" data-theme="vineyard" onclick="setThemeName('vineyard')">
-              <span class="theme-dots"><span class="theme-dot" style="background:#0f1a12"></span><span class="theme-dot" style="background:#4caf50"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-              <span>{{ t.theme_vineyard }}</span>
-              <i class="mdi mdi-check dd-check"></i>
-            </div>
-            <div class="theme-dropdown-item" data-theme="champagne" onclick="setThemeName('champagne')">
-              <span class="theme-dots"><span class="theme-dot" style="background:#1a1508"></span><span class="theme-dot" style="background:#c9a84c"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-              <span>{{ t.theme_champagne }}</span>
-              <i class="mdi mdi-check dd-check"></i>
-            </div>
-            <div class="theme-dropdown-item" data-theme="slate" onclick="setThemeName('slate')">
-              <span class="theme-dots"><span class="theme-dot" style="background:#12151c"></span><span class="theme-dot" style="background:#5c7cfa"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-              <span>{{ t.theme_slate }}</span>
-              <i class="mdi mdi-check dd-check"></i>
-            </div>
-            <div class="theme-dropdown-item" data-theme="burgundy" onclick="setThemeName('burgundy')">
-              <span class="theme-dots"><span class="theme-dot" style="background:#180a1c"></span><span class="theme-dot" style="background:#ab47bc"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-              <span>{{ t.theme_burgundy }}</span>
-              <i class="mdi mdi-check dd-check"></i>
+        <div class="settings-section-title">{{ t.settings_theme }}</div>
+
+        <div class="settings-row">
+          <div class="settings-row-label">{{ t.settings_theme_label }}</div>
+          <div class="settings-row-control">
+            <div class="theme-dropdown">
+              <button type="button" class="theme-dropdown-btn" onclick="toggleThemeDropdown(event)">
+                <span class="theme-dots"></span>
+                <span class="dd-label">Classic</span>
+                <i class="mdi mdi-chevron-down dd-arrow"></i>
+              </button>
+              <div class="theme-dropdown-list">
+                <div class="theme-dropdown-item" data-theme="classic" onclick="setThemeName('classic')">
+                  <span class="theme-dots"><span class="theme-dot" style="background:#1a0a0f"></span><span class="theme-dot" style="background:#c0392b"></span><span class="theme-dot" style="background:#d4a843"></span></span>
+                  <span>{{ t.theme_classic }}</span>
+                  <i class="mdi mdi-check dd-check"></i>
+                </div>
+                <div class="theme-dropdown-item" data-theme="vineyard" onclick="setThemeName('vineyard')">
+                  <span class="theme-dots"><span class="theme-dot" style="background:#0f1a12"></span><span class="theme-dot" style="background:#4caf50"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
+                  <span>{{ t.theme_vineyard }}</span>
+                  <i class="mdi mdi-check dd-check"></i>
+                </div>
+                <div class="theme-dropdown-item" data-theme="champagne" onclick="setThemeName('champagne')">
+                  <span class="theme-dots"><span class="theme-dot" style="background:#1a1508"></span><span class="theme-dot" style="background:#c9a84c"></span><span class="theme-dot" style="background:#d4a843"></span></span>
+                  <span>{{ t.theme_champagne }}</span>
+                  <i class="mdi mdi-check dd-check"></i>
+                </div>
+                <div class="theme-dropdown-item" data-theme="slate" onclick="setThemeName('slate')">
+                  <span class="theme-dots"><span class="theme-dot" style="background:#12151c"></span><span class="theme-dot" style="background:#5c7cfa"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
+                  <span>{{ t.theme_slate }}</span>
+                  <i class="mdi mdi-check dd-check"></i>
+                </div>
+                <div class="theme-dropdown-item" data-theme="burgundy" onclick="setThemeName('burgundy')">
+                  <span class="theme-dots"><span class="theme-dot" style="background:#180a1c"></span><span class="theme-dot" style="background:#ab47bc"></span><span class="theme-dot" style="background:#d4a843"></span></span>
+                  <span>{{ t.theme_burgundy }}</span>
+                  <i class="mdi mdi-check dd-check"></i>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="settings-section">
-        <div class="settings-section-label">{{ t.settings_mode }}</div>
-        <div class="theme-segmented">
-          <button class="theme-seg-btn" data-theme="system" onclick="setThemeMode('system')"><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</button>
-          <button class="theme-seg-btn" data-theme="dark" onclick="setThemeMode('dark')"><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</button>
-          <button class="theme-seg-btn" data-theme="light" onclick="setThemeMode('light')"><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</button>
+        <div class="settings-row">
+          <div class="settings-row-label">{{ t.settings_mode }}</div>
+          <div class="settings-row-control">
+            <div class="theme-segmented">
+              <button class="theme-seg-btn" data-theme="system" onclick="setThemeMode('system')"><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</button>
+              <button class="theme-seg-btn" data-theme="dark" onclick="setThemeMode('dark')"><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</button>
+              <button class="theme-seg-btn" data-theme="light" onclick="setThemeMode('light')"><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -527,7 +536,7 @@ document.addEventListener('keydown', function(e) {
 
 <script type="module">
 // ── COBE 3D Globe ────────────────────────────────────────────────────────────
-import createGlobe from 'https://cdn.skypack.dev/cobe';
+import createGlobe from 'https://esm.sh/cobe';
 
 const GLOBE_THEMES = {
   dark: {
@@ -574,12 +583,11 @@ function initGlobe() {
     size: Math.max(0.04, (p.qty / maxQty) * 0.14)
   }));
 
-  // Determine initial rotation to center on the first/biggest region
+  // Determine initial rotation to center on the biggest region (longitude only)
   const biggest = points.reduce((a, b) => a.qty > b.qty ? a : b);
-  const startPhi = -((10 * Math.PI) / 180);   // start centered on Europe (~10°E)
-  const startTheta = 0.15;                      // horizon slightly above equator
+  const startPhi = (226 - biggest.lon) * Math.PI / 180;  // COBE: 226° base (calibrated) minus longitude
   phi = startPhi;
-  theta = startTheta;
+  theta = 0.3;                                         // slight tilt to show northern hemisphere better
 
   // Get current theme
   const isLight = document.documentElement.classList.contains('light');
@@ -597,7 +605,7 @@ function initGlobe() {
     width: w * 2,
     height: w * 2,
     phi: phi,
-    theta: startTheta,
+    theta: 0.3,
     dark: theme.dark,
     diffuse: theme.diffuse,
     mapSamples: 16000,
