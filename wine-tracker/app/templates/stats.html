@@ -242,7 +242,7 @@
     <div class="stat-body">
       <div class="wine-list">
         {% for w in best_rated %}
-        <div class="wine-list-item">
+        <a href="#" onclick="editWine({{ w['id'] }}); return false;" class="wine-list-item wine-list-link">
           {% if w['type'] %}<span class="type-corner type-{{ w['type']|lower|replace('é','e')|replace('ö','oe') }}"></span>{% endif %}
           <div class="rank">{{ loop.index }}</div>
           <div class="wine-info">
@@ -252,7 +252,7 @@
             </div>
           </div>
           <div class="stars">{% for i in range(w['rating']) %}<i class="mdi mdi-star"></i>{% endfor %}{% for i in range(5 - w['rating']) %}<i class="mdi mdi-star-outline"></i>{% endfor %}</div>
-        </div>
+        </a>
         {% endfor %}
       </div>
     </div>
@@ -265,7 +265,7 @@
     <div class="stat-body">
       <div class="wine-list">
         {% if most_expensive %}
-        <div class="wine-list-item">
+        <a href="#" onclick="editWine({{ most_expensive['id'] }}); return false;" class="wine-list-item wine-list-link">
           {% if most_expensive['type'] %}<span class="type-corner type-{{ most_expensive['type']|lower|replace('é','e')|replace('ö','oe') }}"></span>{% endif %}
           <div class="rank"><i class="mdi mdi-trending-up"></i></div>
           <div class="wine-info">
@@ -273,10 +273,10 @@
             <div class="wine-detail">{{ t.stat_most_expensive }}{% if most_expensive['year'] %} · {{ most_expensive['year'] }}{% endif %}</div>
           </div>
           <div class="wine-price">{{ currency }} {{ "%.2f"|format(most_expensive['price']) }}</div>
-        </div>
+        </a>
         {% endif %}
         {% if cheapest %}
-        <div class="wine-list-item">
+        <a href="#" onclick="editWine({{ cheapest['id'] }}); return false;" class="wine-list-item wine-list-link">
           {% if cheapest['type'] %}<span class="type-corner type-{{ cheapest['type']|lower|replace('é','e')|replace('ö','oe') }}"></span>{% endif %}
           <div class="rank"><i class="mdi mdi-trending-down"></i></div>
           <div class="wine-info">
@@ -284,7 +284,7 @@
             <div class="wine-detail">{{ t.stat_cheapest }}{% if cheapest['year'] %} · {{ cheapest['year'] }}{% endif %}</div>
           </div>
           <div class="wine-price">{{ currency }} {{ "%.2f"|format(cheapest['price']) }}</div>
-        </div>
+        </a>
         {% endif %}
         {% if value and value['avg_price'] %}
         <div class="wine-list-item">
@@ -312,7 +312,7 @@
     <div class="stat-body">
       <div class="wine-list">
         {% for w in recent %}
-        <div class="wine-list-item">
+        <a href="#" onclick="editWine({{ w['id'] }}); return false;" class="wine-list-item wine-list-link">
           {% if w['type'] %}<span class="type-corner type-{{ w['type']|lower|replace('é','e')|replace('ö','oe') }}"></span>{% endif %}
           <div class="rank">{{ loop.index }}</div>
           <div class="wine-info">
@@ -322,7 +322,7 @@
               {% if w['added'] %} · {{ w['added'] | format_date }}{% endif %}
             </div>
           </div>
-        </div>
+        </a>
         {% endfor %}
       </div>
     </div>
@@ -339,78 +339,60 @@
   <div class="chart-tooltip-list"></div>
 </div>
 
-<div class="modal-overlay" id="settingsModal">
+<!-- ═══════════════ WINE EDIT MODAL ═══════════════ -->
+<div class="modal-overlay" id="wineModal">
   <div class="modal">
     <div class="modal-header">
-      <span>{{ t.settings_title }}</span>
-      <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <!-- Hidden element for translated theme labels -->
-      <span data-theme-labels='{"classic":"{{ t.theme_classic }}","vineyard":"{{ t.theme_vineyard }}","champagne":"{{ t.theme_champagne }}","slate":"{{ t.theme_slate }}","burgundy":"{{ t.theme_burgundy }}","homeassistant":"{{ t.theme_homeassistant }}"}'  style="display:none"></span>
-
-      <div class="settings-section">
-        <div class="settings-section-title">{{ t.settings_theme }}</div>
-
-        <div class="settings-row">
-          <div class="settings-row-label">{{ t.settings_theme_label }}</div>
-          <div class="settings-row-control">
-            <div class="theme-dropdown">
-              <button type="button" class="theme-dropdown-btn" onclick="toggleThemeDropdown(event)">
-                <span class="theme-dots"></span>
-                <span class="dd-label">Classic</span>
-                <i class="mdi mdi-chevron-down dd-arrow"></i>
-              </button>
-              <div class="theme-dropdown-list">
-                <div class="theme-dropdown-item" data-theme="classic" onclick="setThemeName('classic')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#1a0a0f"></span><span class="theme-dot" style="background:#c0392b"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_classic }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="vineyard" onclick="setThemeName('vineyard')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#0f1a12"></span><span class="theme-dot" style="background:#4caf50"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-                  <span>{{ t.theme_vineyard }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="champagne" onclick="setThemeName('champagne')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#1a1508"></span><span class="theme-dot" style="background:#c9a84c"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_champagne }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="slate" onclick="setThemeName('slate')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#12151c"></span><span class="theme-dot" style="background:#5c7cfa"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-                  <span>{{ t.theme_slate }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="burgundy" onclick="setThemeName('burgundy')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#180a1c"></span><span class="theme-dot" style="background:#ab47bc"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_burgundy }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="homeassistant" onclick="setThemeName('homeassistant')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#111111"></span><span class="theme-dot" style="background:#009ac7"></span><span class="theme-dot" style="background:#ff9800"></span></span>
-                  <span>{{ t.theme_homeassistant }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-              </div>
+      <span id="wineModalTitle">{{ t.modal_edit_title }}</span>
+      <div class="modal-header-actions">
+        <div class="vivino-id-popover-wrap" id="vivinoIdWrap" style="display:none">
+          <button type="button" class="btn-header-icon" id="vivinoIdTriggerBtn" onclick="toggleVivinoIdPopover()" title="{{ t.vivino_id_title }}">
+            <i class="mdi mdi-code-tags"></i>
+          </button>
+          <div class="vivino-id-popover" id="vivinoIdPopover" style="display:none">
+            <label class="vivino-id-label">{{ t.vivino_id_title }}</label>
+            <div class="vivino-id-row">
+              <input type="text" id="vivinoIdInput" class="vivino-id-input" placeholder="{{ t.vivino_id_placeholder }}" oninput="updateVivinoIdFromPopover()">
+              <a id="vivinoIdTestLink" class="vivino-id-test-link" href="#" target="_blank" rel="noopener" style="display:none" title="{{ t.vivino_id_test }}"><i class="mdi mdi-open-in-new"></i></a>
             </div>
           </div>
         </div>
-
-        <div class="settings-row">
-          <div class="settings-row-label">{{ t.settings_mode }}</div>
-          <div class="settings-row-control">
-            <div class="theme-segmented">
-              <button class="theme-seg-btn" data-theme="system" onclick="setThemeMode('system')"><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</button>
-              <button class="theme-seg-btn" data-theme="dark" onclick="setThemeMode('dark')"><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</button>
-              <button class="theme-seg-btn" data-theme="light" onclick="setThemeMode('light')"><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</button>
-            </div>
-          </div>
-        </div>
+        <button class="modal-close" onclick="tryCloseWineModal()">×</button>
       </div>
     </div>
+
+    <form method="post" id="wineForm" enctype="multipart/form-data">
+      <input type="hidden" name="ai_image" id="aiImageField" value="">
+      <input type="hidden" name="vivino_id" id="wine_vivino_id" value="">
+      <input type="hidden" name="delete_image" id="deleteImageField" value="">
+      <div class="modal-body" id="formStep">
+
+        <div class="form-photo-panel">
+          <label>{{ t.label_photo }}</label>
+          <div class="img-preview" id="winePreview">
+            <i class="mdi mdi-camera" style="font-size:2rem; opacity:.5"></i>
+            <input type="file" name="image" accept="image/*"
+                   onchange="previewImg(this,'winePreview')">
+            <div class="img-actions" id="imgActions" style="display:none">
+              <button type="button" class="img-action-btn" onclick="rotateWineImage()" title="Rotate"><i class="mdi mdi-rotate-right"></i></button>
+              <button type="button" class="img-action-btn danger" onclick="deleteWineImage()" title="Delete"><i class="mdi mdi-delete"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-fields-panel">
+        {% include '_wine_form_fields.html' %}
+
+        <div class="form-footer" id="formFooter">
+          <button type="submit" class="btn-submit" id="wineSubmitBtn">{{ t.btn_save_changes }}</button>
+        </div>
+        </div><!-- /form-fields-panel -->
+      </div>
+    </form>
   </div>
 </div>
+
+{% include '_settings_modal.html' %}
 
 <script src="{{ ingress }}/static/theme.js"></script>
 <script>
@@ -421,29 +403,139 @@ var WINE_DATA = {
 };
 var WINE_TYPE_NAMES = {{ type_translations | tojson }};
 var TOOLTIP_MORE = {{ t.stat_tooltip_more | tojson }};
-
+var INGRESS = '{{ ingress }}';
+var T = {{ t | tojson }};
+</script>
+<script src="{{ ingress }}/static/wine-modal.js"></script>
+<script>
 function openModal(id) {
   document.getElementById(id).classList.add('open');
   if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); }
+  if (id === 'wineModal') { document.getElementById(id).classList.add('form-active'); }
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-// Close modal on overlay click
+// Close modal on overlay click (wineModal: block if dirty)
 document.querySelectorAll('.modal-overlay').forEach(function(el) {
   el.addEventListener('click', function(e) {
-    if (e.target === el) closeModal(el.id);
+    if (e.target !== el) return;
+    if (el.id === 'wineModal') {
+      if (isWineFormDirty()) return;
+      closeModal('wineModal');
+      return;
+    }
+    closeModal(el.id);
   });
 });
 
-// ESC closes modals
+// ESC closes modals (wineModal: guard if dirty)
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.open').forEach(function(el) {
-      el.classList.remove('open');
+      if (el.id === 'wineModal') {
+        tryCloseWineModal();
+      } else {
+        el.classList.remove('open');
+      }
     });
   }
+});
+
+// ── Wine Edit Modal (inline on stats) ──────────────────────
+
+var _editWineId = null;
+var wineFormSnapshot = '';
+
+function editWine(id) {
+  // Hide chart tooltip so it doesn't float over the modal
+  var tip = document.getElementById('chartTooltip');
+  if (tip) tip.style.display = 'none';
+  fetch(INGRESS + '/api/wine/' + id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      var wine = data.wine;
+      _editWineId = wine.id;
+
+      // Set title & action
+      document.getElementById('wineModalTitle').textContent = T.modal_edit_title;
+      document.getElementById('wineSubmitBtn').textContent = T.btn_save_changes;
+      document.getElementById('wineForm').action = INGRESS + '/edit/' + wine.id;
+
+      // Vivino ID display
+      var vivinoWrap = document.getElementById('vivinoIdWrap');
+      if (vivinoWrap) {
+        vivinoWrap.style.display = wine.vivino_id ? '' : 'none';
+        document.getElementById('vivinoIdInput').value = wine.vivino_id || '';
+        var testLink = document.getElementById('vivinoIdTestLink');
+        if (testLink) {
+          if (wine.vivino_id) { testLink.href = 'https://www.vivino.com/w/' + wine.vivino_id; testLink.style.display = ''; }
+          else { testLink.style.display = 'none'; }
+        }
+      }
+
+      // Fill form fields
+      document.getElementById('wine_name').value = wine.name || '';
+      document.getElementById('wine_year').value = wine.year || '';
+      document.getElementById('wine_qty').value = wine.quantity != null ? wine.quantity : 0;
+      document.getElementById('wine_type').value = wine.type || '';
+      document.getElementById('wine_region').value = wine.region || '';
+      document.getElementById('wine_grape').value = wine.grape || '';
+      document.getElementById('wine_bottle_format').value = wine.bottle_format || '0.75';
+      document.getElementById('wine_purchased_at').value = wine.purchased_at || '';
+      document.getElementById('wine_price').value = wine.price || '';
+      document.getElementById('wine_location').value = wine.location || '';
+      document.getElementById('wine_notes').value = wine.notes || '';
+      document.getElementById('wine_drink_from').value = wine.drink_from || '';
+      document.getElementById('wine_drink_until').value = wine.drink_until || '';
+      document.getElementById('wine_vivino_id').value = wine.vivino_id || '';
+      document.getElementById('deleteImageField').value = '';
+      document.getElementById('aiImageField').value = '';
+
+      // Rating stars
+      document.querySelectorAll('#wineForm input[name="rating"]').forEach(function(r) { r.checked = false; });
+      if (wine.rating) {
+        var star = document.getElementById('wine_star' + wine.rating);
+        if (star) star.checked = true;
+      }
+
+      // Image preview
+      var preview = document.getElementById('winePreview');
+      if (wine.image) {
+        preview.innerHTML = '<img src="' + INGRESS + '/uploads/' + wine.image + '">' +
+          '<input type="file" name="image" accept="image/*" onchange="previewImg(this,\'winePreview\')">' +
+          '<div class="img-actions" id="imgActions">' +
+          '<button type="button" class="img-action-btn" onclick="rotateWineImage()" title="Rotate"><i class="mdi mdi-rotate-right"></i></button>' +
+          '<button type="button" class="img-action-btn danger" onclick="deleteWineImage()" title="Delete"><i class="mdi mdi-delete"></i></button>' +
+          '</div>';
+      } else {
+        preview.innerHTML = '<i class="mdi mdi-camera" style="font-size:2rem; opacity:.5"></i>' +
+          '<input type="file" name="image" accept="image/*" onchange="previewImg(this,\'winePreview\')">' +
+          '<div class="img-actions" id="imgActions" style="display:none"></div>';
+      }
+
+      openModal('wineModal');
+      setTimeout(function() { wineFormSnapshot = getWineFormState(); }, 0);
+    });
+}
+
+// AJAX form submit
+document.getElementById('wineForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var form = this;
+  var fd = new FormData(form);
+  fetch(form.action, {
+    method: 'POST', body: fd,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.ok) return;
+    closeModal('wineModal');
+    window.location.reload();
+  });
 });
 
 (function() {
@@ -478,48 +570,66 @@ document.addEventListener('keydown', function(e) {
       var w = show[i];
       var name = w.n + (w.y ? ' ' + w.y : '');
       var qty = w.q > 1 ? w.q + '×' : '';
-      html += '<div class="chart-tooltip-item"><span class="tt-name">' + name + '</span>';
+      html += '<a href="#" onclick="editWine(' + w.id + '); return false;" class="chart-tooltip-item"><span class="tt-name">' + name + '</span>';
       if (qty) html += '<span class="tt-qty">' + qty + '</span>';
-      html += '</div>';
+      html += '</a>';
     }
     if (wines.length > MAX_SHOW) {
       html += '<div class="chart-tooltip-more">' + TOOLTIP_MORE.replace('{}', wines.length - MAX_SHOW) + '</div>';
     }
     list.innerHTML = html;
     tip.style.display = 'block';
+    positionTip(el);
     activeEl = el;
   }
 
-  function moveTip(e) {
-    if (tip.style.display === 'none') return;
-    var x = e.clientX + 14;
-    var y = e.clientY + 14;
+  function positionTip(el) {
+    var rect = el.getBoundingClientRect();
+    var x = rect.right + 10;
+    var y = rect.top;
+    // Show tooltip, then measure its size
     var tw = tip.offsetWidth;
     var th = tip.offsetHeight;
-    if (x + tw > window.innerWidth - 8) x = e.clientX - tw - 10;
-    if (y + th > window.innerHeight - 8) y = e.clientY - th - 10;
+    // Flip left if overflows right edge
+    if (x + tw > window.innerWidth - 8) x = rect.left - tw - 10;
+    // Flip up if overflows bottom
+    if (y + th > window.innerHeight - 8) y = rect.bottom - th;
     if (x < 4) x = 4;
     if (y < 4) y = 4;
     tip.style.left = x + 'px';
     tip.style.top = y + 'px';
   }
 
+  var hideTimer = null;
+
   function hideTip() {
     tip.style.display = 'none';
     activeEl = null;
   }
 
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(hideTip, 250);
+  }
+
+  function cancelHide() {
+    clearTimeout(hideTimer);
+  }
+
+  // Keep tooltip visible while hovering over it
+  tip.addEventListener('mouseenter', cancelHide);
+  tip.addEventListener('mouseleave', scheduleHide);
+
   // Attach events via delegation
   document.addEventListener('mouseover', function(e) {
     var el = e.target.closest('.chart-hover');
-    if (el && el !== activeEl) showTip(el);
+    if (el && el !== activeEl) { cancelHide(); showTip(el); }
   });
-  document.addEventListener('mousemove', moveTip);
   document.addEventListener('mouseout', function(e) {
     var el = e.target.closest('.chart-hover');
     if (el && el === activeEl) {
       var related = e.relatedTarget;
-      if (!related || !el.contains(related)) hideTip();
+      if (!related || !el.contains(related)) scheduleHide();
     }
   });
 
@@ -530,9 +640,7 @@ document.addEventListener('keydown', function(e) {
       e.preventDefault();
       if (el === activeEl) { hideTip(); return; }
       showTip(el);
-      var touch = e.touches[0];
-      moveTip({ clientX: touch.clientX, clientY: touch.clientY });
-    } else {
+    } else if (!tip.contains(e.target)) {
       hideTip();
     }
   }, { passive: false });

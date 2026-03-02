@@ -422,7 +422,7 @@ def index():
         used_locations=used_locations,
         used_grapes=used_grapes,
         used_purchased_at=used_purchased_at,
-        used_regions=used_regions,
+        used_regions_list=used_regions,
         query=q,
         active_type=t,
         show_empty=show_empty,
@@ -659,17 +659,17 @@ def stats_page():
 
     # Most expensive wine
     most_expensive = db.execute(
-        "SELECT name, year, type, price FROM wines WHERE price IS NOT NULL ORDER BY price DESC LIMIT 1"
+        "SELECT id, name, year, type, price FROM wines WHERE price IS NOT NULL ORDER BY price DESC LIMIT 1"
     ).fetchone()
 
     # Cheapest wine
     cheapest = db.execute(
-        "SELECT name, year, type, price FROM wines WHERE price IS NOT NULL AND price > 0 ORDER BY price ASC LIMIT 1"
+        "SELECT id, name, year, type, price FROM wines WHERE price IS NOT NULL AND price > 0 ORDER BY price ASC LIMIT 1"
     ).fetchone()
 
     # Best rated wines
     best_rated = [dict(r) for r in db.execute(
-        "SELECT name, year, type, rating, quantity FROM wines WHERE rating > 0 ORDER BY rating DESC, name LIMIT 5"
+        "SELECT id, name, year, type, rating, quantity FROM wines WHERE rating > 0 ORDER BY rating DESC, name LIMIT 5"
     ).fetchall()]
 
     # Average age
@@ -689,7 +689,7 @@ def stats_page():
 
     # Recently added
     recent = [dict(r) for r in db.execute(
-        "SELECT name, year, type, added FROM wines ORDER BY id DESC LIMIT 3"
+        "SELECT id, name, year, type, added FROM wines ORDER BY id DESC LIMIT 3"
     ).fetchall()]
 
     # Bottles in stock vs out
@@ -699,7 +699,7 @@ def stats_page():
     # Drink window chart – bottles per year, stacked by type
     from collections import defaultdict
     dw_wines = [dict(r) for r in db.execute(
-        "SELECT name, year, type, quantity, drink_from, drink_until FROM wines "
+        "SELECT id, name, year, type, quantity, drink_from, drink_until FROM wines "
         "WHERE drink_until IS NOT NULL AND drink_until != '' AND quantity > 0"
     ).fetchall()]
     dw_by_year = defaultdict(lambda: defaultdict(int))
@@ -711,7 +711,7 @@ def stats_page():
             frm = int(w["drink_from"]) if w.get("drink_from") else until
             t = w["type"] or "Anderes"
             dw_types.add(t)
-            entry = {"n": w["name"], "y": w.get("year"), "q": w["quantity"]}
+            entry = {"n": w["name"], "y": w.get("year"), "q": w["quantity"], "id": w["id"]}
             for yr in range(frm, until + 1):
                 dw_by_year[yr][t] += w["quantity"]
                 dw_names_by_year[yr][t].append(entry)
@@ -731,21 +731,43 @@ def stats_page():
     # Tooltip data – wine names grouped by type and region
     wines_by_type = {}
     for row in db.execute(
-        "SELECT name, year, type, quantity FROM wines "
+        "SELECT id, name, year, type, quantity FROM wines "
         "WHERE type IS NOT NULL AND type != '' AND quantity > 0 ORDER BY name"
     ).fetchall():
         wines_by_type.setdefault(row["type"], []).append(
-            {"n": row["name"], "y": row["year"], "q": row["quantity"]})
+            {"n": row["name"], "y": row["year"], "q": row["quantity"], "id": row["id"]})
 
     wines_by_region = {}
     for row in db.execute(
-        "SELECT name, year, region, quantity FROM wines "
+        "SELECT id, name, year, region, quantity FROM wines "
         "WHERE region IS NOT NULL AND region != '' AND quantity > 0 ORDER BY name"
     ).fetchall():
         wines_by_region.setdefault(row["region"], []).append(
-            {"n": row["name"], "y": row["year"], "q": row["quantity"]})
+            {"n": row["name"], "y": row["year"], "q": row["quantity"], "id": row["id"]})
 
     type_translations = {t: T.get(f"wine_type_{t}", t) for t in WINE_TYPES}
+
+    # Datalist values for edit modal
+    used_locations = [
+        row[0] for row in db.execute(
+            "SELECT DISTINCT location FROM wines WHERE location IS NOT NULL AND location != '' ORDER BY location"
+        ).fetchall()
+    ]
+    used_grapes = [
+        row[0] for row in db.execute(
+            "SELECT DISTINCT grape FROM wines WHERE grape IS NOT NULL AND grape != '' ORDER BY grape"
+        ).fetchall()
+    ]
+    used_purchased_at = [
+        row[0] for row in db.execute(
+            "SELECT DISTINCT purchased_at FROM wines WHERE purchased_at IS NOT NULL AND purchased_at != '' ORDER BY purchased_at"
+        ).fetchall()
+    ]
+    used_regions_list = [
+        row[0] for row in db.execute(
+            "SELECT DISTINCT region FROM wines WHERE region IS NOT NULL AND region != '' ORDER BY region"
+        ).fetchall()
+    ]
 
     return render_template(
         "stats.html",
@@ -771,6 +793,11 @@ def stats_page():
         wines_by_region=wines_by_region,
         type_translations=type_translations,
         current_year=current_year,
+        wine_types=WINE_TYPES,
+        used_regions_list=used_regions_list,
+        used_locations=used_locations,
+        used_grapes=used_grapes,
+        used_purchased_at=used_purchased_at,
     )
 
 
@@ -1233,6 +1260,15 @@ def reanalyze_wine():
 
 
 # ── API for Home Assistant sensors ───────────────────────────────────────────
+
+@app.route("/api/wine/<int:wine_id>")
+def api_get_wine(wine_id):
+    db = get_db()
+    wine = db.execute("SELECT * FROM wines WHERE id = ?", (wine_id,)).fetchone()
+    if not wine:
+        return jsonify({"ok": False, "error": "not found"}), 404
+    return jsonify({"ok": True, "wine": wine_json(wine_id)})
+
 
 @app.route("/api/summary")
 def api_summary():

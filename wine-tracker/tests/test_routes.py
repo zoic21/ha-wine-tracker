@@ -35,6 +35,14 @@ class TestIndex:
         resp = client.get("/?q=NonexistentWine12345")
         assert resp.status_code == 200
 
+    def test_edit_param_loads(self, client, sample_wine):
+        """Index with ?edit=ID should load successfully (JS opens modal client-side)."""
+        wine_id = sample_wine["wine"]["id"]
+        resp = client.get(f"/?edit={wine_id}")
+        assert resp.status_code == 200
+        # The wine card should be present for JS to find
+        assert str(wine_id).encode() in resp.data
+
     def test_type_filter(self, client, sample_wine):
         resp = client.get("/?type=Rotwein")
         assert resp.status_code == 200
@@ -314,6 +322,84 @@ class TestStatsPage:
         assert resp.status_code == 200
         # 2*0.75 + 1*1.5 = 3.0 liters
         assert b"3.0" in resp.data
+
+    def test_stats_tooltip_data_contains_wine_id(self, client, sample_wine):
+        """WINE_DATA in stats page should include wine IDs for clickable tooltips."""
+        wine_id = sample_wine["wine"]["id"]
+        resp = client.get("/stats")
+        html = resp.data.decode()
+
+        # wines_by_type should contain the wine ID
+        assert f'"id": {wine_id}' in html or f'"id":{wine_id}' in html
+
+    def test_stats_tooltip_links_to_edit(self, client, sample_wine):
+        """Tooltip items should use inline editWine() calls."""
+        resp = client.get("/stats")
+        html = resp.data.decode()
+        # The JS template builds <a href="#" onclick="editWine(ID); return false;" class="chart-tooltip-item">
+        assert "editWine(" in html
+        assert "chart-tooltip-item" in html
+
+    def test_stats_no_from_stats_links(self, client, sample_wine):
+        """Stats page should not contain from=stats links (edit is inline now)."""
+        resp = client.get("/stats")
+        html = resp.data.decode()
+        assert "from=stats" not in html
+
+    def test_stats_has_edit_modal(self, client, sample_wine):
+        """Stats page should contain the inline wine edit modal."""
+        resp = client.get("/stats")
+        html = resp.data.decode()
+        assert 'id="wineModal"' in html
+        assert 'id="wineForm"' in html
+
+
+# ── GET /api/wine/<id> ────────────────────────────────────────────────────────
+
+class TestApiGetWine:
+    def test_get_existing_wine(self, client, sample_wine):
+        wine_id = sample_wine["wine"]["id"]
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data["wine"]["id"] == wine_id
+        assert data["wine"]["name"] == "Château Test"
+
+    def test_get_nonexistent_wine(self, client):
+        resp = client.get("/api/wine/99999")
+        assert resp.status_code == 404
+        data = json.loads(resp.data)
+        assert data["ok"] is False
+
+    def test_get_wine_includes_all_fields(self, client):
+        """API response should include all wine fields."""
+        resp = client.post(
+            "/add",
+            data={
+                "name": "Full Wine",
+                "year": "2020",
+                "type": "Rotwein",
+                "quantity": "5",
+                "region": "Toscana, IT",
+                "grape": "Sangiovese",
+                "price": "25.00",
+                "bottle_format": "0.75",
+            },
+            headers=AJAX,
+        )
+        wine_id = json.loads(resp.data)["wine"]["id"]
+
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        wine = data["wine"]
+        assert wine["name"] == "Full Wine"
+        assert wine["year"] == 2020
+        assert wine["type"] == "Rotwein"
+        assert wine["quantity"] == 5
+        assert wine["region"] == "Toscana, IT"
+        assert wine["grape"] == "Sangiovese"
+        assert wine["price"] == 25.00
+        assert wine["bottle_format"] == 0.75
 
 
 # ── GET /api/summary ──────────────────────────────────────────────────────────

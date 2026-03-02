@@ -96,7 +96,7 @@
       <div class="ribbon ribbon-{{ w['type']|lower|replace('é','e')|replace('ö','oe') }}">{{ w['type'] | wine_type }}</div>
     {% endif %}
 
-    <div class="card-img" onclick="cardImgClick(this)">
+    <div class="card-img{% if w['image'] %} shimmer{% endif %}" onclick="cardImgClick(this)">
       {% if w['image'] %}
         <img src="{{ ingress }}/uploads/{{ w['image'] }}" alt="{{ w['name'] }}" loading="lazy">
       {% else %}
@@ -266,121 +266,7 @@
         </div>
 
         <div class="form-fields-panel">
-        <div>
-          <label>{{ t.label_name }}</label>
-          <input type="text" name="name" id="wine_name" required placeholder="{{ t.placeholder_name }}">
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>{{ t.label_vintage }}</label>
-            <input type="number" name="year" id="wine_year" min="1900" max="2099" placeholder="2020">
-          </div>
-          <div>
-            <label>{{ t.label_quantity }}</label>
-            <input type="number" name="quantity" id="wine_qty" min="0" value="1">
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>{{ t.label_type }}</label>
-            <select name="type" id="wine_type">
-              <option value="">{{ t.type_select_default }}</option>
-              {% for wt in wine_types %}
-              <option value="{{ wt }}">{{ wt | wine_type }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label>{{ t.label_region }}</label>
-            <input type="text" name="region" id="wine_region" placeholder="{{ t.placeholder_region }}" list="regionList" autocomplete="off">
-            <datalist id="regionList">
-              {% for r in used_regions %}
-              <option value="{{ r }}">
-              {% endfor %}
-            </datalist>
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>{{ t.label_grape }}</label>
-            <input type="text" name="grape" id="wine_grape" placeholder="{{ t.placeholder_grape }}" list="grapeList" autocomplete="off">
-            <datalist id="grapeList">
-              {% for g in used_grapes %}
-              <option value="{{ g }}">
-              {% endfor %}
-            </datalist>
-          </div>
-          <div>
-            <label>{{ t.label_bottle_format }}</label>
-            <select name="bottle_format" id="wine_bottle_format">
-              <option value="0.1875">Piccolo (0.1875 l)</option>
-              <option value="0.375">Demi (0.375 l)</option>
-              <option value="0.75" selected>Standard (0.75 l)</option>
-              <option value="1.5">Magnum (1.5 l)</option>
-              <option value="3">Double Magnum (3 l)</option>
-              <option value="4.5">Jeroboam (4.5 l)</option>
-              <option value="6">Imperial (6 l)</option>
-              <option value="9">Salmanazar (9 l)</option>
-              <option value="12">Balthazar (12 l)</option>
-              <option value="15">Nebuchadnezzar (15 l)</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label>{{ t.label_rating }}</label>
-          <div class="star-input">
-            {% for i in [5,4,3,2,1] %}
-            <input type="radio" name="rating" id="wine_star{{ i }}" value="{{ i }}">
-            <label for="wine_star{{ i }}"><i class="mdi mdi-star"></i></label>
-            {% endfor %}
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>{{ t.label_purchased_at }}</label>
-            <input type="text" name="purchased_at" id="wine_purchased_at" placeholder="{{ t.placeholder_purchased }}" list="purchasedAtList" autocomplete="off">
-            <datalist id="purchasedAtList">
-              {% for p in used_purchased_at %}
-              <option value="{{ p }}">
-              {% endfor %}
-            </datalist>
-          </div>
-          <div>
-            <label>{{ t.label_price }} ({{ currency }})</label>
-            <input type="number" name="price" id="wine_price" min="0" step="0.01" placeholder="54.90">
-          </div>
-        </div>
-
-        <div class="row2">
-          <div>
-            <label>{{ t.label_drink_from }}</label>
-            <input type="number" name="drink_from" id="wine_drink_from" min="2000" max="2099" placeholder="2025">
-          </div>
-          <div>
-            <label>{{ t.label_drink_until }}</label>
-            <input type="number" name="drink_until" id="wine_drink_until" min="2000" max="2099" placeholder="2030">
-          </div>
-        </div>
-
-        <div>
-          <label>{{ t.label_location }}</label>
-          <input type="text" name="location" id="wine_location" placeholder="{{ t.placeholder_location }}" list="locationList" autocomplete="off">
-          <datalist id="locationList">
-            {% for loc in used_locations %}
-            <option value="{{ loc }}">
-            {% endfor %}
-          </datalist>
-        </div>
-
-        <div>
-          <label>{{ t.label_notes }}</label>
-          <textarea name="notes" id="wine_notes" placeholder="{{ t.placeholder_notes }}"></textarea>
-        </div>
+        {% include '_wine_form_fields.html' %}
 
         <div class="form-footer" id="formFooter">
           <div class="reload-popover-wrap" id="reloadPopoverWrap" style="display:none">
@@ -464,78 +350,7 @@
 
 
 <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
-<div class="modal-overlay" id="settingsModal">
-  <div class="modal">
-    <div class="modal-header">
-      <span>{{ t.settings_title }}</span>
-      <button class="modal-close" onclick="closeModal('settingsModal')">&times;</button>
-    </div>
-    <div class="modal-body">
-      <!-- Hidden element for translated theme labels -->
-      <span data-theme-labels='{"classic":"{{ t.theme_classic }}","vineyard":"{{ t.theme_vineyard }}","champagne":"{{ t.theme_champagne }}","slate":"{{ t.theme_slate }}","burgundy":"{{ t.theme_burgundy }}","homeassistant":"{{ t.theme_homeassistant }}"}'  style="display:none"></span>
-
-      <div class="settings-section">
-        <div class="settings-section-title">{{ t.settings_theme }}</div>
-
-        <div class="settings-row">
-          <div class="settings-row-label">{{ t.settings_theme_label }}</div>
-          <div class="settings-row-control">
-            <div class="theme-dropdown">
-              <button type="button" class="theme-dropdown-btn" onclick="toggleThemeDropdown(event)">
-                <span class="theme-dots"></span>
-                <span class="dd-label">Classic</span>
-                <i class="mdi mdi-chevron-down dd-arrow"></i>
-              </button>
-              <div class="theme-dropdown-list">
-                <div class="theme-dropdown-item" data-theme="classic" onclick="setThemeName('classic')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#1a0a0f"></span><span class="theme-dot" style="background:#c0392b"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_classic }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="vineyard" onclick="setThemeName('vineyard')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#0f1a12"></span><span class="theme-dot" style="background:#4caf50"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-                  <span>{{ t.theme_vineyard }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="champagne" onclick="setThemeName('champagne')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#1a1508"></span><span class="theme-dot" style="background:#c9a84c"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_champagne }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="slate" onclick="setThemeName('slate')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#12151c"></span><span class="theme-dot" style="background:#5c7cfa"></span><span class="theme-dot" style="background:#c9a84c"></span></span>
-                  <span>{{ t.theme_slate }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="burgundy" onclick="setThemeName('burgundy')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#180a1c"></span><span class="theme-dot" style="background:#ab47bc"></span><span class="theme-dot" style="background:#d4a843"></span></span>
-                  <span>{{ t.theme_burgundy }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-                <div class="theme-dropdown-item" data-theme="homeassistant" onclick="setThemeName('homeassistant')">
-                  <span class="theme-dots"><span class="theme-dot" style="background:#111111"></span><span class="theme-dot" style="background:#009ac7"></span><span class="theme-dot" style="background:#ff9800"></span></span>
-                  <span>{{ t.theme_homeassistant }}</span>
-                  <i class="mdi mdi-check dd-check"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="settings-row">
-          <div class="settings-row-label">{{ t.settings_mode }}</div>
-          <div class="settings-row-control">
-            <div class="theme-segmented">
-              <button class="theme-seg-btn" data-theme="system" onclick="setThemeMode('system')"><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</button>
-              <button class="theme-seg-btn" data-theme="dark" onclick="setThemeMode('dark')"><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</button>
-              <button class="theme-seg-btn" data-theme="light" onclick="setThemeMode('light')"><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+{% include '_settings_modal.html' %}
 
 
 <!-- ═══════════════ LIGHTBOX ═══════════════ -->
@@ -549,7 +364,9 @@
 const INGRESS = '{{ ingress }}';
 const CURRENCY = '{{ currency }}';
 const T = {{ t | tojson }};
-
+</script>
+<script src="{{ ingress }}/static/wine-modal.js"></script>
+<script>
 // ── Client-side filter state ─────────────────────────────────────────────────
 var activeType = '';
 var activeDrinkWindow = '';
@@ -794,6 +611,8 @@ document.querySelectorAll('.modal-overlay').forEach(el => {
     if (e.target !== el) return;
     if (el.id === 'wineModal') {
       if (isWineFormDirty()) return; // block close
+      closeModal('wineModal');
+      return;
     }
     el.classList.remove('open');
   });
@@ -813,67 +632,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-function previewImg(input, previewId) {
-  const preview = document.getElementById(previewId);
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    let img = preview.querySelector('img');
-    if (!img) { img = document.createElement('img'); preview.prepend(img); }
-    img.src = e.target.result;
-    preview.childNodes.forEach(n => { if (n.nodeType === 3) n.remove(); });
-    let cam = preview.querySelector('.mdi-camera'); if (cam) cam.style.display = 'none';
-    var actions = document.getElementById('imgActions');
-    if (actions) actions.style.display = '';
-  };
-  reader.readAsDataURL(file);
-}
-
 var _editWineId = null;
-
-function rotateWineImage() {
-  var preview = document.getElementById('winePreview');
-  var img = preview.querySelector('img');
-  if (!img) return;
-  var tempImg = new Image();
-  tempImg.crossOrigin = 'anonymous';
-  tempImg.onload = function() {
-    var canvas = document.createElement('canvas');
-    var ctx = canvas.getContext('2d');
-    canvas.width = tempImg.naturalHeight;
-    canvas.height = tempImg.naturalWidth;
-    ctx.translate(canvas.width, 0);
-    ctx.rotate(Math.PI / 2);
-    ctx.drawImage(tempImg, 0, 0);
-    img.src = canvas.toDataURL('image/jpeg', 0.85);
-    canvas.toBlob(function(blob) {
-      var file = new File([blob], 'rotated.jpg', { type: 'image/jpeg' });
-      var dt = new DataTransfer();
-      dt.items.add(file);
-      preview.querySelector('input[type=file]').files = dt.files;
-    }, 'image/jpeg', 0.85);
-  };
-  tempImg.src = img.src;
-}
-
-function deleteWineImage() {
-  if (!confirm('Delete photo?')) return;
-  document.getElementById('deleteImageField').value = '1';
-  var preview = document.getElementById('winePreview');
-  var img = preview.querySelector('img');
-  if (img) img.remove();
-  // Restore camera icon
-  var cam = preview.querySelector('.mdi-camera');
-  if (cam) { cam.style.display = ''; }
-  else {
-    cam = document.createElement('i');
-    cam.className = 'mdi mdi-camera';
-    cam.style.cssText = 'font-size:2rem; opacity:.5';
-    preview.insertBefore(cam, preview.firstChild);
-  }
-  document.getElementById('imgActions').style.display = 'none';
-}
 
 const AI_ENABLED = {{ 'true' if ai_enabled else 'false' }};
 var _aiLastFile = null; // track file for retry
@@ -1341,36 +1100,6 @@ function aiChangePhoto() {
   _aiLastFile = null;
 }
 
-// ── Dirty-tracking for wineModal ──────────────────────────────────────────────
-var wineFormSnapshot = '';
-
-function getWineFormState() {
-  var fields = ['wine_name','wine_year','wine_qty','wine_type','wine_region',
-                'wine_notes','wine_purchased_at','wine_price','wine_drink_from',
-                'wine_drink_until','wine_location','wine_grape','wine_bottle_format'];
-  var parts = fields.map(function(id) { return document.getElementById(id).value; });
-  // Stars
-  for (var i = 1; i <= 5; i++) {
-    var el = document.getElementById('wine_star' + i);
-    if (el && el.checked) { parts.push('star' + i); break; }
-  }
-  // File input
-  var fi = document.querySelector('#winePreview input[type=file]');
-  if (fi && fi.value) parts.push('file:' + fi.value);
-  return parts.join('|');
-}
-
-function isWineFormDirty() {
-  return getWineFormState() !== wineFormSnapshot;
-}
-
-function tryCloseWineModal() {
-  if (isWineFormDirty()) {
-    if (!confirm(T.confirm_discard)) return;
-  }
-  closeModal('wineModal');
-}
-
 // Helper: get wine data from closest .card element
 function getCardData(el) {
   const card = el.closest('.card');
@@ -1517,48 +1246,11 @@ function closeReloadPopover() {
   var pop = document.getElementById('reloadPopover');
   if (pop) pop.style.display = 'none';
 }
-// Close popover on outside click
+// Close reload popover on outside click
 document.addEventListener('click', function(e) {
   var wrap = document.getElementById('reloadPopoverWrap');
   if (wrap && !wrap.contains(e.target)) closeReloadPopover();
-  var vwrap = document.getElementById('vivinoIdWrap');
-  if (vwrap && !vwrap.contains(e.target)) closeVivinoIdPopover();
 });
-
-// ── Vivino ID Popover ─────────────────────────────────────────────────────────
-
-function toggleVivinoIdPopover() {
-  var pop = document.getElementById('vivinoIdPopover');
-  if (!pop) return;
-  var open = pop.style.display === 'none' || !pop.style.display;
-  pop.style.display = open ? '' : 'none';
-  if (open) {
-    // Sync from hidden field
-    var val = document.getElementById('wine_vivino_id').value || '';
-    document.getElementById('vivinoIdInput').value = val;
-    updateVivinoIdTestLink(val);
-    document.getElementById('vivinoIdInput').focus();
-  }
-}
-function closeVivinoIdPopover() {
-  var pop = document.getElementById('vivinoIdPopover');
-  if (pop) pop.style.display = 'none';
-}
-function updateVivinoIdFromPopover() {
-  var val = document.getElementById('vivinoIdInput').value.trim();
-  document.getElementById('wine_vivino_id').value = val;
-  updateVivinoIdTestLink(val);
-}
-function updateVivinoIdTestLink(val) {
-  var link = document.getElementById('vivinoIdTestLink');
-  if (!link) return;
-  if (val) {
-    link.href = 'https://www.vivino.com/w/' + val;
-    link.style.display = '';
-  } else {
-    link.style.display = 'none';
-  }
-}
 
 function setReloadLoading(on) {
   var btn = document.getElementById('reloadTriggerBtn');
@@ -1694,12 +1386,19 @@ function openDupModal(id, name, year, qty) {
 // ── AJAX helpers ──────────────────────────────────────────────────────────────
 
 function highlightCard(card) {
-  card.classList.remove('highlight');
+  // Remove highlight from any previously highlighted cards
+  document.querySelectorAll('.card.highlight').forEach(function(c) {
+    c.classList.remove('highlight');
+  });
   void card.offsetWidth; // force reflow
   card.classList.add('highlight');
   setTimeout(function() {
     card.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 100);
+  // Clean up class after animation completes
+  setTimeout(function() {
+    card.classList.remove('highlight');
+  }, 2100);
 }
 
 // ── Update location datalist with new locations from cards ─────────────────
@@ -1783,7 +1482,7 @@ function renderCard(w) {
   }
 
   return ribbonHtml +
-    '<div class="card-img" onclick="cardImgClick(this)">' + imgHtml + '</div>' +
+    '<div class="card-img' + (w.image ? ' shimmer' : '') + '" onclick="cardImgClick(this)">' + imgHtml + '</div>' +
     '<div class="qty-badge ' + (w.quantity > 0 ? 'has' : '') + '">' + w.quantity + ' ' + T.bottles_abbr + '</div>' +
     '<div class="card-body" onclick="editFromCard(this)">' +
       '<div class="card-name" title="' + escapeHtml(w.name) + '">' + escapeHtml(w.name) + '</div>' +
@@ -1868,6 +1567,7 @@ document.getElementById('wineForm').addEventListener('submit', function(e) {
       grid.appendChild(card);
     }
     applyDrinkWindowWarning(card);
+    initImageShimmer(card);
     ensureFilterTab(w.type);
     refreshLocationList();
     refreshPurchasedAtList();
@@ -1947,6 +1647,7 @@ document.getElementById('dupForm').addEventListener('submit', function(e) {
       document.querySelector('.grid').appendChild(card);
     }
     applyDrinkWindowWarning(card);
+    initImageShimmer(card);
     ensureFilterTab(w.type);
     refreshLocationList();
     refreshPurchasedAtList();
@@ -1999,6 +1700,18 @@ document.getElementById('deleteForm').addEventListener('submit', function(e) {
   history.replaceState(null, '', window.location.pathname + (clean ? '?' + clean : ''));
 })();
 
+// Open edit modal if ?edit=ID is in URL
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var editId = params.get('edit');
+  if (!editId) return;
+  var card = document.querySelector('.card[data-id="' + editId + '"]');
+  if (card) editFromCard(card);
+  params.delete('edit');
+  var clean = params.toString();
+  history.replaceState(null, '', window.location.pathname + (clean ? '?' + clean : ''));
+})();
+
 // Apply filters on initial load (hides empty bottles when showEmpty is false)
 applyFilters();
 
@@ -2034,6 +1747,25 @@ function applyDrinkWindowWarning(root) {
   });
 }
 applyDrinkWindowWarning();
+
+// Shimmer / skeleton loading — reveal images with fade-in once loaded
+function initImageShimmer(container) {
+  (container || document).querySelectorAll('.card-img img:not(.loaded)').forEach(function(img) {
+    if (img.complete && img.naturalHeight > 0) {
+      img.classList.add('loaded');
+      img.parentElement.classList.remove('shimmer');
+    } else {
+      img.addEventListener('load', function() {
+        img.classList.add('loaded');
+        img.parentElement.classList.remove('shimmer');
+      });
+      img.addEventListener('error', function() {
+        img.parentElement.classList.remove('shimmer');
+      });
+    }
+  });
+}
+initImageShimmer();
 </script>
 
 <button class="fab" onclick="openWineModal()" title="{{ t.btn_add_wine }}"><i class="mdi mdi-plus"></i></button>
