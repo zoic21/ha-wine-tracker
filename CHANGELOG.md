@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+- **Mobile tab bar** — bottom navigation bar on mobile replaces the header links for easier thumb-reach navigation between Cellar and Statistics
+- **Fullscreen chat on mobile** — the sommelier chat panel now opens fullscreen on small screens so the keyboard doesn't cover the conversation
+- **Security audit** — comprehensive security review documented in `SECURITY_AUDIT.md` covering XSS, path traversal, CSRF, and more (fixes coming in future releases)
+
 ## 1.4.0
 
 - **AI Sommelier chat** — ask your personal sommelier for food pairings, serving temperatures, or bottle recommendations — it knows every wine in your cellar and responds in your language

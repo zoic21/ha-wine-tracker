@@ -1772,5 +1772,14 @@ initImageShimmer();
 {% include '_chat_panel.html' %}
 <button class="fab" onclick="openWineModal()" title="{{ t.btn_add_wine }}"><i class="mdi mdi-plus"></i></button>
 
+<nav class="bottom-tab-bar">
+  <a class="tab-item active" href="{{ ingress }}/">
+    <i class="mdi mdi-bottle-wine"></i><span>{{ t.nav_cellar }}</span>
+  </a>
+  <a class="tab-item" href="{{ ingress }}/stats">
+    <i class="mdi mdi-chart-bar"></i><span>{{ t.stats_title }}</span>
+  </a>
+</nav>
+
 </body>
 </html>
