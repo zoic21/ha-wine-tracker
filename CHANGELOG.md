@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.2
+
+- **Fix chat behind keyboard** — chat panel uses dynamic viewport height (`dvh`) so it shrinks when the mobile keyboard opens
+
 ## 1.4.1
 
 - **Mobile tab bar** — bottom navigation bar on mobile replaces the header links for easier thumb-reach navigation between Cellar and Statistics
