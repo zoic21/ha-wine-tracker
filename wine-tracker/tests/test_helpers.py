@@ -213,3 +213,76 @@ class TestWineJsonSchema:
         rules = wine_app._wine_json_rules("de")
         assert "bottle_format" in rules
         assert "0.75" in rules
+
+
+# ── ENV variable config override ─────────────────────────────────────────────
+
+class TestEnvConfig:
+    """Tests for ENV variable configuration override (standalone Docker)."""
+
+    # All ENV keys that load_options() reads — clear them before each test
+    _ENV_KEYS = [
+        "CURRENCY", "LANGUAGE", "AI_PROVIDER",
+        "ANTHROPIC_API_KEY", "ANTHROPIC_MODEL",
+        "OPENAI_API_KEY", "OPENAI_MODEL",
+        "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
+        "OLLAMA_HOST", "OLLAMA_MODEL",
+    ]
+
+    def _clear_env(self, monkeypatch):
+        for key in self._ENV_KEYS:
+            monkeypatch.delenv(key, raising=False)
+
+    def test_env_overrides_defaults(self, monkeypatch):
+        """ENV vars should override built-in defaults when no options.json exists."""
+        monkeypatch.setattr(wine_app, "OPTIONS_PATH", "/nonexistent/options.json")
+        self._clear_env(monkeypatch)
+        monkeypatch.setenv("CURRENCY", "EUR")
+        monkeypatch.setenv("LANGUAGE", "en")
+        opts = wine_app.load_options()
+        assert opts["currency"] == "EUR"
+        assert opts["language"] == "en"
+
+    def test_env_overrides_options_json(self, tmp_path, monkeypatch):
+        """ENV vars should take precedence over options.json values."""
+        opts_file = tmp_path / "options.json"
+        opts_file.write_text('{"currency": "CHF", "language": "de"}')
+        monkeypatch.setattr(wine_app, "OPTIONS_PATH", str(opts_file))
+        self._clear_env(monkeypatch)
+        monkeypatch.setenv("CURRENCY", "USD")
+        opts = wine_app.load_options()
+        assert opts["currency"] == "USD"  # ENV wins
+        assert opts["language"] == "de"   # options.json kept
+
+    def test_options_json_still_works(self, tmp_path, monkeypatch):
+        """options.json values should work when no ENV override is set."""
+        opts_file = tmp_path / "options.json"
+        opts_file.write_text('{"currency": "EUR"}')
+        monkeypatch.setattr(wine_app, "OPTIONS_PATH", str(opts_file))
+        self._clear_env(monkeypatch)
+        opts = wine_app.load_options()
+        assert opts["currency"] == "EUR"
+
+    def test_all_env_keys_mapped(self, monkeypatch):
+        """All ENV keys in env_map should be applied correctly."""
+        monkeypatch.setattr(wine_app, "OPTIONS_PATH", "/nonexistent/options.json")
+        self._clear_env(monkeypatch)
+        monkeypatch.setenv("AI_PROVIDER", "openai")
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test-key")
+        monkeypatch.setenv("OPENAI_MODEL", "gpt-5")
+        opts = wine_app.load_options()
+        assert opts["ai_provider"] == "openai"
+        assert opts["openai_api_key"] == "sk-test-key"
+        assert opts["openai_model"] == "gpt-5"
+
+    def test_empty_env_does_not_override(self, tmp_path, monkeypatch):
+        """Empty string ENV vars should not override options.json."""
+        opts_file = tmp_path / "options.json"
+        opts_file.write_text('{"currency": "CHF"}')
+        monkeypatch.setattr(wine_app, "OPTIONS_PATH", str(opts_file))
+        self._clear_env(monkeypatch)
+        # os.environ.get returns "" for empty string, but load_options
+        # only overrides when val is truthy
+        monkeypatch.setenv("CURRENCY", "")
+        opts = wine_app.load_options()
+        assert opts["currency"] == "CHF"  # empty ENV should not override

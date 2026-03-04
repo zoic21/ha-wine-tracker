@@ -131,6 +131,7 @@
       {% endif %}
     </div>
 
+    {% if not auth_readonly %}
     <div class="card-actions">
       <button onclick="changeQty(this,-1)" title="{{ t.btn_less }}" style="padding:.5rem .65rem">−</button>
       <span class="qty-display" style="flex:1; display:flex; align-items:center; justify-content:center;
@@ -145,6 +146,7 @@
       <button class="danger" title="{{ t.btn_delete }}"
               onclick="deleteFromCard(this)"><i class="mdi mdi-delete"></i></button>
     </div>
+    {% endif %}
   </div>
   {% endfor %}
 </div>
@@ -365,6 +367,7 @@
 const INGRESS = '{{ ingress }}';
 const CURRENCY = '{{ currency }}';
 const T = {{ t | tojson }};
+const AUTH_READONLY = {{ auth_readonly | tojson }};
 </script>
 <script src="{{ ingress }}/static/wine-modal.js"></script>
 <script>
@@ -1492,6 +1495,7 @@ function renderCard(w) {
       '<div class="card-extra">' + extra + '</div>' +
       notesHtml +
     '</div>' +
+    (AUTH_READONLY ? '' :
     '<div class="card-actions">' +
       '<button onclick="changeQty(this,-1)" title="' + T.btn_less + '" style="padding:.5rem .65rem">−</button>' +
       '<span class="qty-display" style="flex:1;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:var(--gold);font-weight:700;">' + w.quantity + '</span>' +
@@ -1499,7 +1503,7 @@ function renderCard(w) {
       '<button onclick="editFromCard(this)" title="' + T.btn_edit + '" style="border-left:1px solid var(--border)"><i class="mdi mdi-pencil"></i></button>' +
       '<button onclick="dupFromCard(this)" title="' + T.btn_duplicate + '"><i class="mdi mdi-content-copy"></i></button>' +
       '<button class="danger" title="' + T.btn_delete + '" onclick="deleteFromCard(this)"><i class="mdi mdi-delete"></i></button>' +
-    '</div>';
+    '</div>');
 }
 
 function updateCardData(card, w) {
@@ -1787,7 +1791,7 @@ initImageShimmer();
 </script>
 
 {% include '_chat_panel.html' %}
-<button class="fab" onclick="openWineModal()" title="{{ t.btn_add_wine }}"><i class="mdi mdi-plus"></i></button>
+{% if not auth_readonly %}<button class="fab" onclick="openWineModal()" title="{{ t.btn_add_wine }}"><i class="mdi mdi-plus"></i></button>{% endif %}
 
 <nav class="bottom-tab-bar">
   <a class="tab-item active" href="{{ ingress }}/">

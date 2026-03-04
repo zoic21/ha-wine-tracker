@@ -1,0 +1,48 @@
+services:
+  wine-tracker:
+    image: ghcr.io/xenofex7/wine-tracker:latest
+    # To build locally instead, comment out 'image' and uncomment:
+    # build:
+    #   context: ..
+    #   dockerfile: docker/Dockerfile
+    ports:
+      - "5050:5050"
+    volumes:
+      - .:/data
+    environment:
+      # ── Authentication ──────────────────────────────────────────────
+      - AUTH_ENABLED=true
+      # Format: user:password (admin) or user:password:readonly (read-only)
+      - USERS=admin:changeme
+      - SECRET_KEY=change-this-to-a-random-string
+
+      # ── General ─────────────────────────────────────────────────────
+      # Currency: CHF, EUR, USD, GBP, CAD, AUD
+      - CURRENCY=CHF
+      # Language: de, en, fr, it, es, pt, nl
+      - LANGUAGE=de
+
+      # ── AI Provider (optional — pick ONE) ───────────────────────────
+      # Provider: none, anthropic, openai, openrouter, ollama
+      # - AI_PROVIDER=anthropic
+
+      # Anthropic (Claude):
+      # - ANTHROPIC_API_KEY=sk-ant-...
+      # - ANTHROPIC_MODEL=claude-opus-4-6
+
+      # OpenAI (GPT):
+      # - OPENAI_API_KEY=sk-...
+      # - OPENAI_MODEL=gpt-5.2
+
+      # OpenRouter (multi-provider):
+      # - OPENROUTER_API_KEY=sk-or-...
+      # - OPENROUTER_MODEL=anthropic/claude-opus-4.6
+
+      # Ollama (local, no API key needed):
+      # - OLLAMA_HOST=http://host.docker.internal:11434
+      # - OLLAMA_MODEL=llava
+
+    restart: unless-stopped
+
+volumes:
+  wine-data:

@@ -94,6 +94,7 @@ TRANSLATIONS = {
     "delete_title": "Wein löschen",
     "delete_really": "wirklich löschen?",
     "btn_cancel": "Abbrechen",
+    "btn_logout": "Abmelden",
     "btn_confirm_delete": "Löschen",
 
     # Duplicate modal
@@ -278,6 +279,7 @@ TRANSLATIONS = {
     "delete_title": "Delete wine",
     "delete_really": "really delete?",
     "btn_cancel": "Cancel",
+    "btn_logout": "Sign out",
     "btn_confirm_delete": "Delete",
 
     "dup_title": "Duplicate wine",
@@ -457,6 +459,7 @@ TRANSLATIONS = {
     "delete_title": "Supprimer le vin",
     "delete_really": "vraiment supprimer ?",
     "btn_cancel": "Annuler",
+    "btn_logout": "Déconnexion",
     "btn_confirm_delete": "Supprimer",
 
     "dup_title": "Dupliquer le vin",
@@ -636,6 +639,7 @@ TRANSLATIONS = {
     "delete_title": "Elimina vino",
     "delete_really": "eliminare davvero?",
     "btn_cancel": "Annulla",
+    "btn_logout": "Disconnetti",
     "btn_confirm_delete": "Elimina",
 
     "dup_title": "Duplica vino",
@@ -815,6 +819,7 @@ TRANSLATIONS = {
     "delete_title": "Eliminar vino",
     "delete_really": "¿eliminar realmente?",
     "btn_cancel": "Cancelar",
+    "btn_logout": "Cerrar sesión",
     "btn_confirm_delete": "Eliminar",
 
     "dup_title": "Duplicar vino",
@@ -994,6 +999,7 @@ TRANSLATIONS = {
     "delete_title": "Excluir vinho",
     "delete_really": "realmente excluir?",
     "btn_cancel": "Cancelar",
+    "btn_logout": "Sair",
     "btn_confirm_delete": "Excluir",
 
     "dup_title": "Duplicar vinho",
@@ -1173,6 +1179,7 @@ TRANSLATIONS = {
     "delete_title": "Wijn verwijderen",
     "delete_really": "echt verwijderen?",
     "btn_cancel": "Annuleren",
+    "btn_logout": "Afmelden",
     "btn_confirm_delete": "Verwijderen",
 
     "dup_title": "Wijn dupliceren",

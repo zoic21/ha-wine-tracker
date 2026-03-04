@@ -1,4 +1,4 @@
-# Wine Tracker – Home Assistant Add-on
+# Wine Tracker – Home Assistant Add-on & Docker Standalone
 
 <p align="center">
   <img src="logo.png" alt="Wine Tracker Logo" width="128">
@@ -12,13 +12,14 @@
 ![ha addon][ha-badge]
 ![ai powered][ai-badge]
 ![arch][arch-badge]
+![docker][docker-badge]
 
 ![github stars][stars-badge]
 ![github issues][issues-badge]
 ![last commit][commit-badge]
 ![commit activity][activity-badge]
 
-A sleek, modern wine cellar tracker running as a Home Assistant add-on. Manage your entire collection — from label photo to tasting notes — directly in the HA sidebar.
+A sleek, modern wine cellar tracker. Run it as a **Home Assistant add-on** or as a **standalone Docker container** — manage your entire collection from label photo to tasting notes.
 
 ## Screenshots
 
@@ -75,7 +76,7 @@ Set your preferred language in the add-on configuration (`language` option).
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-## Installation
+## Installation — Home Assistant Add-on
 
 [![Add Repository to My Home Assistant][my-ha-badge]][my-ha-url]
 
@@ -89,7 +90,113 @@ Or install manually:
 
 The add-on opens in the HA sidebar under **Wine Tracker**.
 
-## Configuration
+## Installation — Docker Standalone
+
+Run Wine Tracker without Home Assistant using Docker Compose.
+
+### Quick Start
+
+1. Create a `docker-compose.yml`:
+
+```yaml
+services:
+  wine-tracker:
+    image: ghcr.io/xenofex7/wine-tracker:latest
+    ports:
+      - "5050:5050"
+    volumes:
+      - wine-data:/data
+    environment:
+      - AUTH_ENABLED=true
+      - USERS=admin:changeme
+      - SECRET_KEY=change-this-to-a-random-string
+      - CURRENCY=CHF
+      - LANGUAGE=de
+    restart: unless-stopped
+
+volumes:
+  wine-data:
+```
+
+2. Start it:
+
+```bash
+docker-compose up -d
+```
+
+3. Open **http://localhost:5050** and log in.
+
+### Environment Variables
+
+#### Authentication
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AUTH_ENABLED` | `false` | Enable login (`true` / `false`) |
+| `USERS` | _(empty)_ | User list (see format below) |
+| `SECRET_KEY` | _(random)_ | Session encryption key — set a fixed value for persistence across restarts |
+
+**User format:** `user1:password1,user2:password2,guest:password3:readonly`
+
+- Users are comma-separated
+- Each user is `username:password` (full access) or `username:password:readonly` (view only)
+- Readonly users can browse and search wines but cannot add, edit, or delete
+
+#### General
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `CURRENCY` | `CHF` | Currency symbol — `CHF`, `EUR`, `USD`, `GBP`, `CAD`, `AUD` |
+| `LANGUAGE` | `de` | UI language — `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
+
+#### AI Provider (optional — pick one)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `AI_PROVIDER` | `none` | AI provider: `none`, `anthropic`, `openai`, `openrouter`, `ollama` |
+
+**Anthropic (Claude):**
+
+| Variable | Default |
+|----------|---------|
+| `ANTHROPIC_API_KEY` | _(empty)_ |
+| `ANTHROPIC_MODEL` | `claude-opus-4-6` |
+
+**OpenAI (GPT):**
+
+| Variable | Default |
+|----------|---------|
+| `OPENAI_API_KEY` | _(empty)_ |
+| `OPENAI_MODEL` | `gpt-5.2` |
+
+**OpenRouter (multi-provider):**
+
+| Variable | Default |
+|----------|---------|
+| `OPENROUTER_API_KEY` | _(empty)_ |
+| `OPENROUTER_MODEL` | `anthropic/claude-opus-4.6` |
+
+**Ollama (local, no API key needed):**
+
+| Variable | Default |
+|----------|---------|
+| `OLLAMA_HOST` | `http://localhost:11434` |
+| `OLLAMA_MODEL` | `llava` |
+
+> **Tip:** When running Ollama in a separate container, use `http://host.docker.internal:11434` as the host.
+
+### Updating
+
+```bash
+docker-compose pull
+docker-compose up -d
+```
+
+### Data Persistence (Docker)
+
+All data (SQLite database + photos) is stored in the Docker volume mounted at `/data`. As long as you keep the volume, your data survives container updates.
+
+## Configuration (Home Assistant)
 
 All options are configured via the Home Assistant add-on configuration page.
 
@@ -122,7 +229,7 @@ The AI feature lets you snap a photo of a wine label and automatically fills in 
 - **OpenRouter** — a unified API that routes to many models. Requires an API key from [openrouter.ai](https://openrouter.ai). You can choose any vision-capable model.
 - **Ollama** — runs fully local, no API key needed. Install [Ollama](https://ollama.com) and pull a vision model (e.g. `llava`). Set the host to your Ollama server address.
 
-## Data Persistence
+## Data Persistence (Home Assistant)
 
 All data (SQLite database + photos) is stored under `/share/wine-tracker/` — preserved across add-on updates, restarts, and HA updates.
 
@@ -182,7 +289,6 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 - **Export / Import** — CSV & JSON export of your full collection; import to restore or migrate
 - **Custom sorting** — sort by name, year, price, rating, date added, or drinking window
 - **Display modes** — switch between card grid, compact list, and table view
-- **Clickable statistics** — tap a chart segment to instantly filter the cellar to those wines
 
 ### 🧠 Smarter AI
 - **Ask the AI about your wines** — "What should I open for a steak dinner?" → personalized recommendations from your own cellar
@@ -207,7 +313,6 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 - **Wishlist mode** — mark wines you want to buy (separate from owned bottles)
 
 ### 📦 Platform & Data
-- **Docker standalone mode** — run without Home Assistant as a plain Docker container
 - **Tags & custom categories** — label wines as "gift", "special occasion", "everyday", etc.
 - **Bulk editing** — select multiple wines and change location, type, or category at once
 - **Multiple cellars** — manage separate collections (home, vacation house, office)
@@ -233,5 +338,6 @@ MIT
 [issues-badge]: https://img.shields.io/github/issues/xenofex7/ha-wine-tracker?style=flat&logo=github
 [commit-badge]: https://img.shields.io/github/last-commit/xenofex7/ha-wine-tracker?style=flat&logo=github
 [activity-badge]: https://img.shields.io/github/commit-activity/y/xenofex7/ha-wine-tracker?style=flat&logo=github
+[docker-badge]: https://img.shields.io/badge/Docker-standalone-2496ED.svg?logo=docker&logoColor=white
 [my-ha-badge]: https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg
 [my-ha-url]: https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fxenofex7%2Fha-wine-tracker

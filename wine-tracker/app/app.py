@@ -1,13 +1,34 @@
 import json
 import os
+import secrets
 import shutil
 import sqlite3
 import uuid
 from datetime import date
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from translations import TRANSLATIONS
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+# ── Authentication (optional, for standalone Docker deployment) ───────────────
+AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").lower() == "true"
+
+# Parse USERS env: "admin:pass,user2:pass2,guest:pw:readonly"
+_USERS = {}
+if AUTH_ENABLED:
+    for pair in os.environ.get("USERS", "").split(","):
+        pair = pair.strip()
+        if ":" in pair:
+            parts = pair.split(":", 2)  # max 3 parts
+            user = parts[0].strip()
+            pw = parts[1].strip()
+            role = parts[2].strip() if len(parts) > 2 else "admin"
+            _USERS[user] = {
+                "hash": generate_password_hash(pw, method="pbkdf2:sha256"),
+                "role": role,
+            }
 
 # ── HA Add-on Options ─────────────────────────────────────────────────────────
 OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")
@@ -33,6 +54,26 @@ def load_options():
         defaults.update(opts)
     except (FileNotFoundError, json.JSONDecodeError):
         pass
+
+    # ENV variables override options.json (for standalone Docker deployment)
+    env_map = {
+        "CURRENCY": "currency",
+        "LANGUAGE": "language",
+        "AI_PROVIDER": "ai_provider",
+        "ANTHROPIC_API_KEY": "anthropic_api_key",
+        "ANTHROPIC_MODEL": "anthropic_model",
+        "OPENAI_API_KEY": "openai_api_key",
+        "OPENAI_MODEL": "openai_model",
+        "OPENROUTER_API_KEY": "openrouter_api_key",
+        "OPENROUTER_MODEL": "openrouter_model",
+        "OLLAMA_HOST": "ollama_host",
+        "OLLAMA_MODEL": "ollama_model",
+    }
+    for env_key, opt_key in env_map.items():
+        val = os.environ.get(env_key)
+        if val:
+            defaults[opt_key] = val
+
     # Backward compat: auto-detect Anthropic from old config (pre-multi-provider)
     if defaults.get("ai_provider", "none") == "none" and defaults.get("anthropic_api_key", "").strip():
         defaults["ai_provider"] = "anthropic"
@@ -73,7 +114,10 @@ HA_OPTIONS = load_options()
 
 # Persist data in /share so it survives app restarts/updates
 # Falls /share nicht existiert (lokale Entwicklung), nutze ./data stattdessen
-DATA_DIR = "/share/wine-tracker" if os.path.isdir("/share") else os.path.join(os.path.dirname(__file__), "data")
+# DATA_DIR ENV override enables standalone Docker deployment
+DATA_DIR = os.environ.get("DATA_DIR",
+    "/share/wine-tracker" if os.path.isdir("/share")
+    else os.path.join(os.path.dirname(__file__), "data"))
 UPLOAD_DIR = os.path.join(DATA_DIR, "uploads")
 DB_PATH = os.path.join(DATA_DIR, "wine.db")
 
@@ -175,6 +219,35 @@ def set_ingress_path():
     g.ingress = request.headers.get("X-Ingress-Path", "")
 
 
+@app.before_request
+def check_auth():
+    """Enforce login when AUTH_ENABLED=true (standalone Docker deployment)."""
+    if not AUTH_ENABLED:
+        return
+    if request.endpoint in ("login", "static", "uploaded_file"):
+        return
+    if not session.get("user"):
+        if request.path.startswith("/api/"):
+            return jsonify(ok=False, error="unauthorized"), 401
+        return redirect(url_for("login"))
+
+
+@app.before_request
+def check_readonly():
+    """Block write operations for readonly users."""
+    if not AUTH_ENABLED:
+        return
+    if session.get("role") != "readonly":
+        return
+    if request.method in ("POST", "PUT", "DELETE"):
+        # Allow login POST and chat API for readonly users
+        allowed = {"login", "api_chat"}
+        if request.endpoint not in allowed:
+            if request.is_json or request.headers.get("X-Requested-With"):
+                return jsonify(ok=False, error="readonly"), 403
+            return redirect(g.get("ingress", "") + "/")
+
+
 # ── i18n ──────────────────────────────────────────────────────────────────────
 LANG = HA_OPTIONS.get("language", "de")
 T = TRANSLATIONS.get(LANG, TRANSLATIONS["de"])
@@ -211,6 +284,8 @@ def inject_globals():
         "t": T,
         "lang": LANG,
         "ai_enabled": ai_enabled,
+        "auth_user": session.get("user") if AUTH_ENABLED else None,
+        "auth_readonly": session.get("role") == "readonly" if AUTH_ENABLED else False,
     }
 
 
@@ -352,6 +427,29 @@ def save_image(file):
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not AUTH_ENABLED:
+        return redirect("/")
+    if request.method == "POST":
+        username = request.form.get("username", "")
+        password = request.form.get("password", "")
+        user_data = _USERS.get(username)
+        if user_data and check_password_hash(user_data["hash"], password):
+            session["user"] = username
+            session["role"] = user_data["role"]
+            return redirect(g.get("ingress", "") + "/")
+        return render_template("login.html", error=True)
+    return render_template("login.html", error=False)
+
+
+@app.route("/logout")
+def logout():
+    session.pop("user", None)
+    session.pop("role", None)
+    return redirect(url_for("login"))
+
 
 @app.route("/")
 def index():

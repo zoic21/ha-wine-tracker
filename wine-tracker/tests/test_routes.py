@@ -9,6 +9,7 @@ import sys
 
 import pytest
 from unittest.mock import patch
+from werkzeug.security import generate_password_hash
 
 APP_DIR = os.path.join(os.path.dirname(__file__), "..", "app")
 sys.path.insert(0, APP_DIR)
@@ -457,3 +458,266 @@ class TestChatPage:
         }
         response = client.get("/chat")
         assert response.status_code == 302
+
+
+# ── Authentication ────────────────────────────────────────────────────────────
+
+class TestAuth:
+    """Tests for the optional authentication system (standalone Docker)."""
+
+    def _make_auth_app(self, extra_users=None):
+        """Create a test client with authentication enabled."""
+        import app as wine_app
+
+        wine_app.AUTH_ENABLED = True
+        wine_app._USERS = {
+            "admin": {"hash": generate_password_hash("secret", method="pbkdf2:sha256"), "role": "admin"},
+            "user1": {"hash": generate_password_hash("pass123", method="pbkdf2:sha256"), "role": "admin"},
+        }
+        if extra_users:
+            wine_app._USERS.update(extra_users)
+        wine_app.app.config["TESTING"] = True
+        wine_app.app.secret_key = "test-secret"
+        wine_app.init_db()
+        return wine_app.app.test_client()
+
+    def teardown_method(self):
+        """Reset auth state after each test."""
+        import app as wine_app
+
+        wine_app.AUTH_ENABLED = False
+        wine_app._USERS = {}
+
+    def test_no_auth_by_default(self, client):
+        """With AUTH_ENABLED=false (default), all routes should be open."""
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_auth_redirects_to_login(self):
+        """With AUTH_ENABLED=true, unauthenticated requests redirect to /login."""
+        client = self._make_auth_app()
+        resp = client.get("/")
+        assert resp.status_code == 302
+        assert "/login" in resp.headers["Location"]
+
+    def test_login_page_loads(self):
+        """The /login page should render successfully."""
+        client = self._make_auth_app()
+        resp = client.get("/login")
+        assert resp.status_code == 200
+        assert b"Wine Tracker" in resp.data
+        assert b"username" in resp.data
+
+    def test_login_success(self):
+        """Correct credentials should log the user in and redirect."""
+        client = self._make_auth_app()
+        resp = client.post(
+            "/login",
+            data={"username": "admin", "password": "secret"},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 302
+        assert "/login" not in resp.headers.get("Location", "")
+
+    def test_login_wrong_password(self):
+        """Wrong password should re-render login page with error."""
+        client = self._make_auth_app()
+        resp = client.post(
+            "/login",
+            data={"username": "admin", "password": "wrong"},
+        )
+        assert resp.status_code == 200
+        assert b"Invalid" in resp.data or b"error" in resp.data.lower()
+
+    def test_login_unknown_user(self):
+        """Unknown user should re-render login page."""
+        client = self._make_auth_app()
+        resp = client.post(
+            "/login",
+            data={"username": "nobody", "password": "test"},
+        )
+        assert resp.status_code == 200
+
+    def test_logout(self):
+        """Logout should clear the session and redirect to login."""
+        client = self._make_auth_app()
+        # Login first
+        client.post("/login", data={"username": "admin", "password": "secret"})
+        # Then logout
+        resp = client.get("/logout")
+        assert resp.status_code == 302
+        # Verify logged out — next request should redirect to login
+        resp = client.get("/")
+        assert resp.status_code == 302
+        assert "/login" in resp.headers["Location"]
+
+    def test_static_accessible_without_login(self):
+        """Static files (CSS, JS) should be accessible without authentication."""
+        client = self._make_auth_app()
+        resp = client.get("/static/style.css")
+        assert resp.status_code == 200
+
+    def test_api_requires_auth(self):
+        """API endpoints should return 401 when not authenticated."""
+        client = self._make_auth_app()
+        resp = client.get("/api/summary")
+        assert resp.status_code == 401
+        data = json.loads(resp.data)
+        assert data["ok"] is False
+
+    def test_authenticated_access(self):
+        """After login, all routes should be accessible."""
+        client = self._make_auth_app()
+        client.post("/login", data={"username": "admin", "password": "secret"})
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_login_disabled_redirects_to_index(self, client):
+        """/login should redirect to / when auth is disabled."""
+        resp = client.get("/login")
+        assert resp.status_code == 302
+        assert resp.headers["Location"].endswith("/")
+
+    # ── Readonly role tests ──────────────────────────────────────────────────
+
+    def test_readonly_cannot_add(self):
+        """Readonly users cannot add wines."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post("/add", data={"name": "Test Wine"})
+        assert resp.status_code in (302, 403)
+
+    def test_readonly_cannot_delete(self):
+        """Readonly users cannot delete wines."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post("/delete/1")
+        assert resp.status_code in (302, 403)
+
+    def test_readonly_cannot_edit(self):
+        """Readonly users cannot edit wines."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post("/edit/1", data={"name": "Hacked"}, headers=AJAX)
+        assert resp.status_code == 403
+        data = json.loads(resp.data)
+        assert data["error"] == "readonly"
+
+    def test_readonly_cannot_duplicate(self):
+        """Readonly users cannot duplicate wines."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post("/duplicate/1", data={}, headers=AJAX)
+        assert resp.status_code == 403
+
+    def test_readonly_can_view(self):
+        """Readonly users can view the wine list."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_readonly_can_view_stats(self):
+        """Readonly users can view the stats page."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.get("/stats")
+        assert resp.status_code == 200
+
+    def test_readonly_can_chat(self):
+        """Readonly users can use the chat API."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        with patch("app.load_options") as mock_opts, patch("app._call_chat") as mock_chat:
+            mock_opts.return_value = {
+                "currency": "CHF", "language": "en",
+                "ai_provider": "anthropic", "anthropic_api_key": "sk-test",
+                "anthropic_model": "claude-sonnet-4-20250514",
+                "openai_api_key": "", "openrouter_api_key": "",
+                "ollama_host": "", "ollama_model": "",
+            }
+            mock_chat.return_value = "Nice wine!"
+            resp = client.post(
+                "/api/chat",
+                data=json.dumps({"message": "hi", "history": []}),
+                content_type="application/json",
+            )
+            assert resp.status_code == 200
+
+    def test_readonly_hides_fab(self):
+        """Readonly users should not see the FAB (add wine) button."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.get("/")
+        assert b'class="fab"' not in resp.data
+
+    def test_readonly_hides_card_actions(self):
+        """Readonly users should not see card action buttons in server-rendered cards."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        # Login as admin first to add a wine
+        client.post("/login", data={"username": "admin", "password": "secret"})
+        client.post("/add", data={"name": "Visible Wine", "quantity": "2"}, headers=AJAX)
+        client.get("/logout")
+        # Login as readonly
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.get("/")
+        html = resp.data.decode()
+        # The server-rendered card divs should not have card-actions
+        # (the JS renderCard function string still exists in source but is
+        # guarded by AUTH_READONLY, so we check the actual HTML cards only)
+        # Count card-actions outside of <script> tags
+        import re
+        # Remove all script blocks from HTML
+        html_no_script = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL)
+        assert 'class="card-actions"' not in html_no_script
+
+    def test_admin_can_add(self):
+        """Admin users can add wines normally."""
+        client = self._make_auth_app()
+        client.post("/login", data={"username": "admin", "password": "secret"})
+        resp = client.post("/add", data={"name": "Admin Wine"}, headers=AJAX)
+        assert resp.status_code == 200
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+
+    def test_readonly_blocks_api_write(self):
+        """Readonly users cannot use write API endpoints."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post(
+            "/api/vivino-image",
+            data=json.dumps({"url": "https://example.com/img.jpg"}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 403
+
+    def test_login_sets_role_in_session(self):
+        """Login should store the user role in the session."""
+        client = self._make_auth_app(extra_users={
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        })
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        # Verify by checking auth_readonly in template context
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert b"AUTH_READONLY = true" in resp.data

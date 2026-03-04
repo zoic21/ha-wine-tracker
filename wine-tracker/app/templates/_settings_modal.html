@@ -68,6 +68,17 @@
           </div>
         </div>
       </div>
+
+      {% if auth_user %}
+      <div class="settings-section" style="border-top: 1px solid var(--border); padding-top: .9rem;">
+        <div class="settings-row">
+          <div class="settings-row-label"><i class="mdi mdi-account"></i> {{ auth_user }}</div>
+          <div class="settings-row-control">
+            <a href="{{ ingress }}/logout" class="btn-cancel" style="text-decoration: none; text-align: center;">{{ t.btn_logout }}</a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>
