@@ -118,6 +118,8 @@ volumes:
   wine-data:
 ```
 
+> **Full example:** See [`docker/docker-compose.yml`](docker/docker-compose.yml) for a complete configuration with all available options.
+
 2. Start it:
 
 ```bash
@@ -289,11 +291,6 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 - **Export / Import** — CSV & JSON export of your full collection; import to restore or migrate
 - **Custom sorting** — sort by name, year, price, rating, date added, or drinking window
 - **Display modes** — switch between card grid, compact list, and table view
-
-### 🧠 Smarter AI
-- **Ask the AI about your wines** — "What should I open for a steak dinner?" → personalized recommendations from your own cellar
-- **Food & occasion pairing** — AI suggests matching dishes or events per wine
-- **Taste profile generation** — auto-generate tasting notes from label photos
 
 ### 📊 Analytics & Tracking
 - **Consumption tracking** — record when a bottle was opened; track drinking history over time
