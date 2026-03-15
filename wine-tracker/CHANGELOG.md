@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.1
+
+- **Fix OpenAI compatibility** — replace deprecated `max_tokens` with `max_completion_tokens` for newer OpenAI models (o1, o3, gpt-4o-2024-11-20+) that reject the old parameter
+- **About section in settings** — settings modal now shows app version, links to GitHub, Changelog, Community Forum, and MIT license
+- **Fix bottom tab bar padding** — safe-area-inset default changed from 20px to 0px so the tab bar doesn't float on non-notched devices
+- **MIT license** — project is now officially MIT licensed
+- **GitHub Pages landing page** — public landing page with dark/light mode, responsive layout, and lightbox image gallery
+
 ## 1.5.0
 
 - **Docker standalone mode** — run Wine Tracker without Home Assistant via `docker-compose up`; pre-built multi-arch images (amd64 + arm64) on GitHub Container Registry
