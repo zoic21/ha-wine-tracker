@@ -607,7 +607,7 @@ function ensureFilterTab(type) {
 
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); }
+  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); initChatRecordingToggle(); }
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');

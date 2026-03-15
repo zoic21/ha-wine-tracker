@@ -423,7 +423,7 @@ var AUTH_READONLY = {{ auth_readonly | tojson }};
 <script>
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); }
+  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); initChatRecordingToggle(); }
   if (id === 'wineModal') { document.getElementById(id).classList.add('form-active'); }
 }
 function closeModal(id) {

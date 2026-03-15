@@ -77,12 +77,13 @@ var ACTION_ICONS = {
   added: '<i class="mdi mdi-plus-circle-outline"></i>',
   consumed: '<i class="mdi mdi-glass-wine"></i>',
   restocked: '<i class="mdi mdi-package-variant"></i>',
-  removed: '<i class="mdi mdi-delete-outline"></i>'
+  removed: '<i class="mdi mdi-delete-outline"></i>',
+  chat: '<i class="mdi mdi-chat-outline"></i>'
 };
 
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); }
+  if (id === 'settingsModal') { updateThemeSegmented(); updateThemeDropdown(); initChatRecordingToggle(); }
 }
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
@@ -207,6 +208,17 @@ function editFromView() {
   window.open(INGRESS + '/?edit=' + window._viewWineId, '_blank');
 }
 
+function openTimelineChat(event, sessionId) {
+  // On desktop, open flyover panel with the session; on mobile, navigate to /chat
+  if (window.innerWidth > 768) {
+    event.preventDefault();
+    if (!_chatOpen) toggleChatPanel();
+    if (sessionId) loadChatSession(sessionId);
+    return false;
+  }
+  return true; // let the link navigate on mobile
+}
+
 function viewWine(wineId) {
   fetch(INGRESS + '/api/wine/' + wineId)
     .then(function(r) { return r.json(); })
@@ -301,15 +313,29 @@ function loadTimeline() {
           if (e.wine_type) {
             typeClass = 'type-' + e.wine_type.toLowerCase().replace(/é/g,'e').replace(/ö/g,'oe');
           }
-          html += '<a href="#" class="wine-list-item wine-list-link" onclick="viewWine(' + e.wine_id + '); return false;">';
-          if (e.wine_type) html += '<span class="type-corner ' + typeClass + '"></span>';
-          html += '<div class="rank">' + icon + '</div>';
-          html += '<div class="wine-info">';
-          html += '<div class="wine-name">' + escapeHtml(e.wine_name) + '</div>';
-          html += '<div class="wine-detail">' + formatDate(e.timestamp) + '</div>';
-          html += '</div>';
-          html += '<span class="timeline-entry-action">' + escapeHtml(actionLabel) + escapeHtml(qtyStr) + '</span>';
-          html += '</a>';
+          // Chat entries: flyover on desktop, /chat on mobile
+          if (e.action === 'chat') {
+            var sid = e.session_id || '';
+            var chatUrl = INGRESS + '/chat' + (sid ? '?session=' + sid : '');
+            html += '<a href="' + chatUrl + '" class="wine-list-item wine-list-link" onclick="return openTimelineChat(event,' + (sid || 'null') + ')">';
+            html += '<div class="rank">' + icon + '</div>';
+            html += '<div class="wine-info">';
+            html += '<div class="wine-name timeline-chat-name">' + escapeHtml(e.wine_name) + '</div>';
+            html += '<div class="wine-detail">' + formatDate(e.timestamp) + '</div>';
+            html += '</div>';
+            html += '<span class="timeline-entry-action">' + escapeHtml(actionLabel) + '</span>';
+            html += '</a>';
+          } else {
+            html += '<a href="#" class="wine-list-item wine-list-link" onclick="viewWine(' + e.wine_id + '); return false;">';
+            if (e.wine_type) html += '<span class="type-corner ' + typeClass + '"></span>';
+            html += '<div class="rank">' + icon + '</div>';
+            html += '<div class="wine-info">';
+            html += '<div class="wine-name">' + escapeHtml(e.wine_name) + '</div>';
+            html += '<div class="wine-detail">' + formatDate(e.timestamp) + '</div>';
+            html += '</div>';
+            html += '<span class="timeline-entry-action">' + escapeHtml(actionLabel) + escapeHtml(qtyStr) + '</span>';
+            html += '</a>';
+          }
         });
         html += '</div></div></div>';
       });

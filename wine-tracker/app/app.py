@@ -242,8 +242,9 @@ def check_readonly():
     if session.get("role") != "readonly":
         return
     if request.method in ("POST", "PUT", "DELETE"):
-        # Allow login POST and chat API for readonly users
-        allowed = {"login", "api_chat"}
+        # Allow login POST, chat API, chat sessions for readonly users
+        # (session delete is blocked in the endpoint itself)
+        allowed = {"login", "api_chat", "api_chat_sessions_list", "api_chat_session_detail"}
         if request.endpoint not in allowed:
             if request.is_json or request.headers.get("X-Requested-With"):
                 return jsonify(ok=False, error="readonly"), 403
@@ -375,6 +376,26 @@ def init_db():
                     "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
                     (w[0], "added", qty, ts),
                 )
+
+        # ── chat session tables ───────────────────────────────────────────
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                title     TEXT,
+                created   TEXT NOT NULL,
+                updated   TEXT NOT NULL
+            )
+        """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER NOT NULL,
+                role       TEXT NOT NULL,
+                content    TEXT NOT NULL,
+                timestamp  TEXT NOT NULL,
+                FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+            )
+        """)
 
         db.commit()
 
@@ -822,20 +843,38 @@ def api_timeline():
     grouped = {}
     for r in rows:
         day = r["timestamp"][:10] if r["timestamp"] else ""
-        key = (r["wine_id"], r["action"], day)
+        # Chat entries are never grouped (each is a unique conversation)
+        if r["action"] == "chat":
+            key = ("chat", r["id"])
+        else:
+            key = (r["wine_id"], r["action"], day)
         if key in grouped:
             grouped[key]["quantity"] += r["quantity"]
         else:
-            grouped[key] = {
+            # For chat entries (wine_id=0), look up session title
+            wine_name = r["wine_name"]
+            if r["action"] == "chat" and r["wine_id"] == 0:
+                # Try to get session title and id from the most recent chat session around this timestamp
+                session_row = db.execute(
+                    "SELECT id, title FROM chat_sessions WHERE created <= ? ORDER BY created DESC LIMIT 1",
+                    (r["timestamp"],),
+                ).fetchone()
+                wine_name = session_row["title"] if session_row and session_row["title"] else T.get("log_chat", "Sommelier chat")
+            elif not wine_name:
+                wine_name = "(deleted)"
+            entry = {
                 "id": r["id"],
                 "wine_id": r["wine_id"],
-                "wine_name": r["wine_name"] or "(deleted)",
+                "wine_name": wine_name,
                 "wine_image": r["wine_image"],
                 "wine_type": r["wine_type"],
                 "action": r["action"],
                 "quantity": r["quantity"],
                 "timestamp": r["timestamp"],
             }
+            if r["action"] == "chat" and session_row:
+                entry["session_id"] = session_row["id"]
+            grouped[key] = entry
     entries = sorted(grouped.values(), key=lambda e: e["timestamp"], reverse=True)
     return jsonify(ok=True, entries=entries)
 
@@ -1592,6 +1631,80 @@ def reanalyze_wine():
 
 
 
+# ── Chat Session API ──────────────────────────────────────────────────────────
+
+@app.route("/api/chat/sessions", methods=["GET", "POST"])
+def api_chat_sessions_list():
+    """List all chat sessions or create a new one."""
+    db = get_db()
+
+    if request.method == "GET":
+        rows = db.execute("""
+            SELECT cs.id, cs.title, cs.created, cs.updated,
+                   COUNT(cm.id) as message_count
+            FROM chat_sessions cs
+            LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+            GROUP BY cs.id
+            ORDER BY cs.updated DESC
+        """).fetchall()
+        sessions = [dict(r) for r in rows]
+        return jsonify(ok=True, sessions=sessions)
+
+    # POST – create new session
+    now = datetime.now().isoformat()
+    cur = db.execute(
+        "INSERT INTO chat_sessions (title, created, updated) VALUES (?, ?, ?)",
+        (None, now, now),
+    )
+    db.commit()
+    session_id = cur.lastrowid
+
+    # Log to timeline
+    db.execute(
+        "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+        (0, "chat", 1, now),
+    )
+    db.commit()
+
+    return jsonify(ok=True, session={
+        "id": session_id,
+        "title": None,
+        "created": now,
+        "updated": now,
+    })
+
+
+@app.route("/api/chat/sessions/<int:session_id>", methods=["GET", "DELETE"])
+def api_chat_session_detail(session_id):
+    """Get or delete a single chat session."""
+    db = get_db()
+
+    if request.method == "GET":
+        sess = db.execute(
+            "SELECT * FROM chat_sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        if not sess:
+            return jsonify(ok=False, error="not_found"), 404
+        messages = db.execute(
+            "SELECT id, role, content, timestamp FROM chat_messages WHERE session_id = ? ORDER BY id",
+            (session_id,),
+        ).fetchall()
+        return jsonify(ok=True, session=dict(sess), messages=[dict(m) for m in messages])
+
+    # DELETE
+    if AUTH_ENABLED and session.get("role") == "readonly":
+        return jsonify(ok=False, error="readonly"), 403
+    sess = db.execute(
+        "SELECT id FROM chat_sessions WHERE id = ?", (session_id,)
+    ).fetchone()
+    if not sess:
+        return jsonify(ok=False, error="not_found"), 404
+    db.execute("PRAGMA foreign_keys = ON")
+    db.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+    db.commit()
+    return jsonify(ok=True)
+
+
 # ── AI Wine Chat ──────────────────────────────────────────────────────────────
 
 @app.route("/api/chat", methods=["POST"])
@@ -1605,9 +1718,57 @@ def api_chat():
     body = request.get_json(silent=True) or {}
     user_message = (body.get("message") or "").strip()
     history = body.get("history") or []
+    session_id = body.get("session_id")
+    save = body.get("save", True)
 
     if not user_message:
         return jsonify({"ok": False, "error": "empty_message"}), 400
+
+    db = get_db()
+    now = datetime.now().isoformat()
+
+    if save:
+        # Auto-create session if none provided
+        if not session_id:
+            cur = db.execute(
+                "INSERT INTO chat_sessions (title, created, updated) VALUES (?, ?, ?)",
+                (user_message[:50], now, now),
+            )
+            db.commit()
+            session_id = cur.lastrowid
+            # Log to timeline
+            db.execute(
+                "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+                (0, "chat", 1, now),
+            )
+            db.commit()
+        else:
+            # Verify session exists
+            sess = db.execute("SELECT id, title FROM chat_sessions WHERE id = ?", (session_id,)).fetchone()
+            if not sess:
+                return jsonify({"ok": False, "error": "session_not_found"}), 404
+            # Auto-generate title from first user message if title is empty
+            if not sess["title"]:
+                db.execute(
+                    "UPDATE chat_sessions SET title = ? WHERE id = ?",
+                    (user_message[:50], session_id),
+                )
+
+        # Save user message to DB
+        db.execute(
+            "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+            (session_id, "user", user_message, now),
+        )
+        db.commit()
+
+        # If no history provided, load from DB
+        if not history:
+            db_msgs = db.execute(
+                "SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id",
+                (session_id,),
+            ).fetchall()
+            # Exclude the just-inserted user message (it's the last one)
+            history = [{"role": m["role"], "content": m["content"]} for m in db_msgs[:-1]]
 
     # Limit conversation history to prevent token overflow
     history = history[-20:]
@@ -1655,7 +1816,24 @@ def api_chat():
 
     try:
         response_text = _call_chat(provider, messages, system_prompt, opts)
-        return jsonify({"ok": True, "response": response_text})
+
+        if save:
+            # Save assistant response to DB
+            db.execute(
+                "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+                (session_id, "assistant", response_text, datetime.now().isoformat()),
+            )
+            # Update session timestamp
+            db.execute(
+                "UPDATE chat_sessions SET updated = ? WHERE id = ?",
+                (datetime.now().isoformat(), session_id),
+            )
+            db.commit()
+
+        result = {"ok": True, "response": response_text}
+        if save and session_id:
+            result["session_id"] = session_id
+        return jsonify(result)
     except Exception as e:
         app.logger.exception("Chat error: %s", e)
         error_msg = str(e)

@@ -155,6 +155,71 @@ class TestWineLogTable:
         assert count == 1  # No duplicates
 
 
+class TestChatSessionTables:
+    def test_chat_sessions_table_created(self, app):
+        """init_db() should create the chat_sessions table."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='chat_sessions'"
+        ).fetchone()
+        conn.close()
+        assert tables is not None
+
+    def test_chat_messages_table_created(self, app):
+        """init_db() should create the chat_messages table."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        tables = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='chat_messages'"
+        ).fetchone()
+        conn.close()
+        assert tables is not None
+
+    def test_chat_sessions_has_all_columns(self, app):
+        """chat_sessions table should have all expected columns."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(chat_sessions)")}
+        conn.close()
+        expected = {"id", "title", "created", "updated"}
+        assert expected.issubset(cols)
+
+    def test_chat_messages_has_all_columns(self, app):
+        """chat_messages table should have all expected columns."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(chat_messages)")}
+        conn.close()
+        expected = {"id", "session_id", "role", "content", "timestamp"}
+        assert expected.issubset(cols)
+
+    def test_cascade_delete(self, app, db):
+        """Deleting a chat session should CASCADE delete its messages."""
+        db.execute("PRAGMA foreign_keys = ON")
+        db.execute(
+            "INSERT INTO chat_sessions (id, title, created, updated) VALUES (?, ?, ?, ?)",
+            (1, "Test Session", "2025-01-01", "2025-01-01"),
+        )
+        db.execute(
+            "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+            (1, "user", "Hello", "2025-01-01"),
+        )
+        db.execute(
+            "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+            (1, "assistant", "Hi there!", "2025-01-01"),
+        )
+        db.commit()
+
+        # Verify messages exist
+        count = db.execute("SELECT COUNT(*) FROM chat_messages WHERE session_id = 1").fetchone()[0]
+        assert count == 2
+
+        # Delete session
+        db.execute("DELETE FROM chat_sessions WHERE id = 1")
+        db.commit()
+
+        # Messages should be gone
+        count = db.execute("SELECT COUNT(*) FROM chat_messages WHERE session_id = 1").fetchone()[0]
+        assert count == 0
+
+
 class TestDatabaseOperations:
     def test_insert_and_read(self, app, db):
         """Basic insert and read."""

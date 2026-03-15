@@ -26,6 +26,8 @@ TRANSLATIONS = {
     "theme_system": "System",
     "theme_dark": "Dunkel",
     "theme_light": "Hell",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Chatverlauf speichern",
     "settings_about": "Über",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -140,6 +142,11 @@ TRANSLATIONS = {
     "chat_send": "Senden",
     "chat_error": "Fehler bei der Antwort. Bitte nochmal versuchen.",
     "chat_empty_cellar": "Dein Weinkeller ist noch leer. Füge zuerst Weine hinzu!",
+    "chat_new": "Neuer Chat",
+    "chat_history": "Verlauf",
+    "chat_delete": "Chat löschen",
+    "chat_delete_confirm": "Chat wirklich löschen?",
+    "chat_no_sessions": "Noch keine Gespräche",
 
     # Vivino search
     "source_step_title": "Wein erfassen",
@@ -217,6 +224,7 @@ TRANSLATIONS = {
     "log_consumed": "getrunken",
     "log_restocked": "nachgefüllt",
     "log_removed": "entfernt",
+    "log_chat": "Sommelier-Gespräch",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -240,6 +248,8 @@ TRANSLATIONS = {
     "theme_system": "System",
     "theme_dark": "Dark",
     "theme_light": "Light",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Save chat history",
     "settings_about": "About",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -346,6 +356,11 @@ TRANSLATIONS = {
     "chat_send": "Send",
     "chat_error": "Error getting response. Please try again.",
     "chat_empty_cellar": "Your cellar is empty. Add some wines first!",
+    "chat_new": "New chat",
+    "chat_history": "History",
+    "chat_delete": "Delete chat",
+    "chat_delete_confirm": "Really delete this chat?",
+    "chat_no_sessions": "No conversations yet",
 
     # Vivino search
     "source_step_title": "Add wine",
@@ -420,6 +435,7 @@ TRANSLATIONS = {
     "log_consumed": "consumed",
     "log_restocked": "restocked",
     "log_removed": "removed",
+    "log_chat": "Sommelier chat",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -443,6 +459,8 @@ TRANSLATIONS = {
     "theme_system": "Système",
     "theme_dark": "Sombre",
     "theme_light": "Clair",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Enregistrer l'historique",
     "settings_about": "À propos",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -549,6 +567,11 @@ TRANSLATIONS = {
     "chat_send": "Envoyer",
     "chat_error": "Erreur lors de la réponse. Veuillez réessayer.",
     "chat_empty_cellar": "Votre cave est vide. Ajoutez d'abord des vins\u00a0!",
+    "chat_new": "Nouveau chat",
+    "chat_history": "Historique",
+    "chat_delete": "Supprimer le chat",
+    "chat_delete_confirm": "Vraiment supprimer ce chat\u00a0?",
+    "chat_no_sessions": "Aucune conversation",
 
     # Vivino search
     "source_step_title": "Ajouter un vin",
@@ -623,6 +646,7 @@ TRANSLATIONS = {
     "log_consumed": "bu",
     "log_restocked": "réapprovisionné",
     "log_removed": "supprimé",
+    "log_chat": "Discussion sommelier",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -646,6 +670,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Scuro",
     "theme_light": "Chiaro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Salva cronologia chat",
     "settings_about": "Info",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -752,6 +778,11 @@ TRANSLATIONS = {
     "chat_send": "Invia",
     "chat_error": "Errore nella risposta. Riprova.",
     "chat_empty_cellar": "La tua cantina è vuota. Aggiungi prima dei vini!",
+    "chat_new": "Nuova chat",
+    "chat_history": "Cronologia",
+    "chat_delete": "Elimina chat",
+    "chat_delete_confirm": "Eliminare davvero questa chat?",
+    "chat_no_sessions": "Nessuna conversazione",
 
     # Vivino search
     "source_step_title": "Aggiungi vino",
@@ -826,6 +857,7 @@ TRANSLATIONS = {
     "log_consumed": "bevuto",
     "log_restocked": "rifornito",
     "log_removed": "rimosso",
+    "log_chat": "Conversazione sommelier",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -849,6 +881,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Oscuro",
     "theme_light": "Claro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Guardar historial de chat",
     "settings_about": "Acerca de",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -955,6 +989,11 @@ TRANSLATIONS = {
     "chat_send": "Enviar",
     "chat_error": "Error en la respuesta. Inténtalo de nuevo.",
     "chat_empty_cellar": "Tu bodega está vacía. ¡Añade vinos primero!",
+    "chat_new": "Nuevo chat",
+    "chat_history": "Historial",
+    "chat_delete": "Eliminar chat",
+    "chat_delete_confirm": "¿Realmente eliminar este chat?",
+    "chat_no_sessions": "Aún no hay conversaciones",
 
     # Vivino search
     "source_step_title": "Añadir vino",
@@ -1029,6 +1068,7 @@ TRANSLATIONS = {
     "log_consumed": "bebido",
     "log_restocked": "repuesto",
     "log_removed": "eliminado",
+    "log_chat": "Conversación sommelier",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1052,6 +1092,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Escuro",
     "theme_light": "Claro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Salvar histórico de chat",
     "settings_about": "Sobre",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -1158,6 +1200,11 @@ TRANSLATIONS = {
     "chat_send": "Enviar",
     "chat_error": "Erro na resposta. Tente novamente.",
     "chat_empty_cellar": "Sua adega está vazia. Adicione vinhos primeiro!",
+    "chat_new": "Novo chat",
+    "chat_history": "Histórico",
+    "chat_delete": "Excluir chat",
+    "chat_delete_confirm": "Realmente excluir este chat?",
+    "chat_no_sessions": "Nenhuma conversa ainda",
 
     # Vivino search
     "source_step_title": "Adicionar vinho",
@@ -1232,6 +1279,7 @@ TRANSLATIONS = {
     "log_consumed": "bebido",
     "log_restocked": "reabastecido",
     "log_removed": "removido",
+    "log_chat": "Conversa sommelier",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1255,6 +1303,8 @@ TRANSLATIONS = {
     "theme_system": "Systeem",
     "theme_dark": "Donker",
     "theme_light": "Licht",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Chatgeschiedenis opslaan",
     "settings_about": "Over",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -1361,6 +1411,11 @@ TRANSLATIONS = {
     "chat_send": "Verzenden",
     "chat_error": "Fout bij antwoord. Probeer opnieuw.",
     "chat_empty_cellar": "Je wijnkelder is leeg. Voeg eerst wijnen toe!",
+    "chat_new": "Nieuw gesprek",
+    "chat_history": "Geschiedenis",
+    "chat_delete": "Chat verwijderen",
+    "chat_delete_confirm": "Chat echt verwijderen?",
+    "chat_no_sessions": "Nog geen gesprekken",
 
     # Vivino search
     "source_step_title": "Wijn toevoegen",
@@ -1435,6 +1490,7 @@ TRANSLATIONS = {
     "log_consumed": "gedronken",
     "log_restocked": "bijgevuld",
     "log_removed": "verwijderd",
+    "log_chat": "Sommelier gesprek",
 },
 
 }  # end TRANSLATIONS

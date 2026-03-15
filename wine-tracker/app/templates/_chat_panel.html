@@ -3,7 +3,19 @@
 <div class="chat-panel" id="chatPanel">
   <div class="chat-header">
     <span><i class="mdi mdi-chat"></i> {{ t.chat_title }}</span>
-    <button class="chat-close" onclick="toggleChatPanel()">&times;</button>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <button class="chat-header-btn" onclick="toggleChatSessionList()" title="{{ t.chat_history }}"><i class="mdi mdi-history"></i></button>
+      <button class="chat-header-btn" onclick="startNewChatSession()" title="{{ t.chat_new }}"><i class="mdi mdi-plus"></i></button>
+      <button class="chat-close" onclick="toggleChatPanel()">&times;</button>
+    </div>
+  </div>
+  <!-- Session list overlay -->
+  <div class="chat-session-list" id="chatSessionList" style="display:none;">
+    <div class="chat-session-list-header">
+      <span><i class="mdi mdi-history"></i> {{ t.chat_history }}</span>
+      <button class="chat-close" onclick="toggleChatSessionList()">&times;</button>
+    </div>
+    <div class="chat-session-list-body" id="chatSessionListBody"></div>
   </div>
   <div class="chat-messages" id="chatMessages">
     <div class="chat-welcome">
@@ -31,9 +43,20 @@ function renderMarkdown(text) {
   // Fallback if marked didn't load
   return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
-var _chatHistory = JSON.parse(sessionStorage.getItem('chatHistory') || '[]');
+var _chatSessionId = null;
 var _chatOpen = false;
 var _chatSending = false;
+var _chatSessionListOpen = false;
+
+function _isChatRecordingEnabled() {
+  return localStorage.getItem('chatRecording') !== '0';
+}
+
+function _updateChatHistoryButtons() {
+  var enabled = _isChatRecordingEnabled();
+  var btns = document.querySelectorAll('.chat-header-btn');
+  btns.forEach(function(btn) { btn.style.display = enabled ? '' : 'none'; });
+}
 
 function _adjustChatViewport() {
   var panel = document.getElementById('chatPanel');
@@ -52,28 +75,12 @@ if (window.visualViewport) {
 }
 window.addEventListener('resize', _adjustChatViewport);
 
-// Restore previous messages on page load
-(function restoreChatSession() {
-  if (_chatHistory.length === 0) return;
-  var container = document.getElementById('chatMessages');
-  var welcome = container.querySelector('.chat-welcome');
-  if (welcome) welcome.remove();
-  _chatHistory.forEach(function(msg) {
-    var div = document.createElement('div');
-    div.className = 'chat-msg chat-msg-' + msg.role;
-    var bubble = document.createElement('div');
-    bubble.className = 'chat-bubble';
-    if (msg.role === 'assistant') {
-      bubble.innerHTML = renderMarkdown(msg.content);
-    } else {
-      bubble.textContent = msg.content;
-    }
-    div.appendChild(bubble);
-    container.appendChild(div);
-  });
-})();
-
 function toggleChatPanel() {
+  // On mobile, navigate to full chat page instead of flyover
+  if (window.innerWidth <= 768 && !_chatOpen) {
+    window.location.href = INGRESS + '/chat';
+    return;
+  }
   _chatOpen = !_chatOpen;
   var panel = document.getElementById('chatPanel');
   panel.classList.toggle('open', _chatOpen);
@@ -81,11 +88,18 @@ function toggleChatPanel() {
   document.body.classList.toggle('no-scroll', _chatOpen);
   if (_chatOpen) {
     _adjustChatViewport();
+    _updateChatHistoryButtons();
+    // Load most recent session on first open (only if recording enabled)
+    if (!_chatSessionId && _isChatRecordingEnabled()) {
+      loadMostRecentSession();
+    }
     document.getElementById('chatInput').focus();
     scrollChatBottom();
   } else {
     panel.style.height = '';
     panel.style.maxHeight = '';
+    // Close session list if open
+    if (_chatSessionListOpen) toggleChatSessionList();
   }
 }
 
@@ -137,6 +151,113 @@ function removeChatLoading() {
   if (el) el.remove();
 }
 
+function clearChatMessages() {
+  var container = document.getElementById('chatMessages');
+  container.innerHTML = '<div class="chat-welcome">'
+    + '<img src="' + INGRESS + '/static/logo.png" alt="Wine Tracker" style="width: 48px; height: 48px; opacity: .7;">'
+    + '<p>' + (T.chat_welcome || '') + '</p></div>';
+}
+
+function loadMostRecentSession() {
+  fetch(INGRESS + '/api/chat/sessions')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok && data.sessions.length > 0) {
+        loadChatSession(data.sessions[0].id);
+      }
+    });
+}
+
+function loadChatSession(sessionId) {
+  fetch(INGRESS + '/api/chat/sessions/' + sessionId)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      _chatSessionId = sessionId;
+      clearChatMessages();
+      if (data.messages && data.messages.length > 0) {
+        data.messages.forEach(function(msg) {
+          appendChatMessage(msg.role, msg.content);
+        });
+      }
+      // Close session list if open
+      if (_chatSessionListOpen) toggleChatSessionList();
+    });
+}
+
+function startNewChatSession() {
+  _chatSessionId = null;
+  clearChatMessages();
+  document.getElementById('chatInput').focus();
+  // Close session list if open
+  if (_chatSessionListOpen) toggleChatSessionList();
+}
+
+function toggleChatSessionList() {
+  _chatSessionListOpen = !_chatSessionListOpen;
+  var list = document.getElementById('chatSessionList');
+  list.style.display = _chatSessionListOpen ? 'flex' : 'none';
+  if (_chatSessionListOpen) {
+    loadChatSessionList();
+  }
+}
+
+function loadChatSessionList() {
+  var body = document.getElementById('chatSessionListBody');
+  body.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);"><i class="mdi mdi-loading mdi-spin"></i></div>';
+  fetch(INGRESS + '/api/chat/sessions')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (!data.ok) return;
+      if (data.sessions.length === 0) {
+        body.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);">' + (T.chat_no_sessions || 'No conversations yet') + '</div>';
+        return;
+      }
+      var html = '';
+      data.sessions.forEach(function(s) {
+        var isActive = s.id === _chatSessionId;
+        var title = s.title || (T.chat_new || 'New chat');
+        var dateStr = '';
+        if (s.updated) {
+          var d = new Date(s.updated);
+          dateStr = d.toLocaleDateString('{{ lang }}', {day: '2-digit', month: '2-digit', year: 'numeric'});
+        }
+        html += '<div class="chat-session-item' + (isActive ? ' active' : '') + '" onclick="loadChatSession(' + s.id + ')">';
+        html += '<div class="chat-session-item-info">';
+        html += '<div class="chat-session-item-title">' + escapeHtmlChat(title) + '</div>';
+        html += '<div class="chat-session-item-date">' + escapeHtmlChat(dateStr) + ' (' + s.message_count + ')</div>';
+        html += '</div>';
+        if (!AUTH_READONLY) {
+          html += '<button class="chat-session-delete" onclick="event.stopPropagation();deleteChatSession(' + s.id + ')" title="' + (T.chat_delete || 'Delete chat') + '"><i class="mdi mdi-delete-outline"></i></button>';
+        }
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    });
+}
+
+function escapeHtmlChat(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+function deleteChatSession(sessionId) {
+  if (!confirm(T.chat_delete_confirm || 'Really delete this chat?')) return;
+  fetch(INGRESS + '/api/chat/sessions/' + sessionId, {method: 'DELETE'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        if (_chatSessionId === sessionId) {
+          _chatSessionId = null;
+          clearChatMessages();
+        }
+        loadChatSessionList();
+      }
+    });
+}
+
 function sendChatMessage() {
   if (_chatSending) return;
   var input = document.getElementById('chatInput');
@@ -153,21 +274,29 @@ function sendChatMessage() {
 
   var T = window.T || {};
 
+  var chatRecOn = _isChatRecordingEnabled();
+  var payload = {message: text};
+  if (chatRecOn && _chatSessionId) {
+    payload.session_id = _chatSessionId;
+  }
+  if (!chatRecOn) {
+    payload.save = false;
+  }
+
   fetch(INGRESS + '/api/chat', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({message: text, history: _chatHistory})
+    body: JSON.stringify(payload)
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
     removeChatLoading();
     if (data.ok) {
       appendChatMessage('assistant', data.response);
-      _chatHistory.push({role: 'user', content: text});
-      _chatHistory.push({role: 'assistant', content: data.response});
-      // Keep history manageable
-      if (_chatHistory.length > 20) _chatHistory = _chatHistory.slice(-20);
-      sessionStorage.setItem('chatHistory', JSON.stringify(_chatHistory));
+      // Track the session ID returned by the server (only when recording)
+      if (data.session_id && _isChatRecordingEnabled()) {
+        _chatSessionId = data.session_id;
+      }
     } else {
       appendChatMessage('assistant', T.chat_error || 'Error getting response. Please try again.');
     }
