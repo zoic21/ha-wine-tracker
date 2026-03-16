@@ -231,6 +231,21 @@ The AI feature lets you snap a photo of a wine label and automatically fills in 
 - **OpenRouter** — a unified API that routes to many models. Requires an API key from [openrouter.ai](https://openrouter.ai). You can choose any vision-capable model.
 - **Ollama** — runs fully local, no API key needed. Install [Ollama](https://ollama.com) and pull a vision model (e.g. `llava`). Set the host to your Ollama server address.
 
+**Estimated token cost per wine analysis** (~2,500 tokens):
+
+| Provider | Model | Cost / Request |
+|----------|-------|----------------|
+| OpenAI | GPT-4o-mini | ~$0.001 |
+| OpenAI | GPT-4o | ~$0.005–0.01 |
+| OpenAI | GPT-4.1 | ~$0.01 |
+| OpenAI | o3 / o4-mini | ~$0.02–0.05 |
+| Anthropic | Claude Haiku | ~$0.002 |
+| Anthropic | Claude Sonnet | ~$0.01 |
+| Anthropic | Claude Opus | ~$0.05–0.08 |
+| Ollama | Local models | Free |
+
+> **Example:** Analyzing 100 wines costs roughly $0.10 with GPT-4o-mini, $1.00 with Claude Sonnet, or $0.00 with Ollama.
+
 ## Data Persistence (Home Assistant)
 
 All data (SQLite database + photos) is stored under `/share/wine-tracker/` — preserved across add-on updates, restarts, and HA updates.

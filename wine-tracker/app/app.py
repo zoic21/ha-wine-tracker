@@ -348,6 +348,9 @@ def init_db():
             "grape":          "TEXT",
             "vivino_id":      "INTEGER",
             "bottle_format":  "REAL DEFAULT 0.75",
+            "maturity_data":  "TEXT",
+            "taste_profile":  "TEXT",
+            "food_pairings":  "TEXT",
         }
         for col, dtype in migrations.items():
             if col not in existing:
@@ -427,7 +430,16 @@ def wine_json(wine_id):
     row = db.execute("SELECT * FROM wines WHERE id=?", (wine_id,)).fetchone()
     if not row:
         return None
-    return dict(row)
+    d = dict(row)
+    # Parse JSON text columns into real objects
+    for key in ("maturity_data", "taste_profile", "food_pairings"):
+        raw = d.get(key)
+        if raw:
+            try:
+                d[key] = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                d[key] = None
+    return d
 
 
 def stats_json():
@@ -589,11 +601,15 @@ def add():
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
     bottle_format_raw = request.form.get("bottle_format", "").strip()
+    maturity_data_raw = request.form.get("maturity_data", "").strip() or None
+    taste_profile_raw = request.form.get("taste_profile", "").strip() or None
+    food_pairings_raw = request.form.get("food_pairings", "").strip() or None
     cur = db.execute(
         """INSERT INTO wines
            (name, year, type, region, quantity, rating, notes, image, added,
-            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format,
+            maturity_data, taste_profile, food_pairings)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             request.form["name"].strip(),
             request.form.get("year") or None,
@@ -612,6 +628,9 @@ def add():
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
             float(bottle_format_raw) if bottle_format_raw else 0.75,
+            maturity_data_raw,
+            taste_profile_raw,
+            food_pairings_raw,
         ),
     )
     db.commit()
@@ -668,11 +687,15 @@ def edit(wine_id):
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
     bottle_format_raw = request.form.get("bottle_format", "").strip()
+    maturity_data_raw = request.form.get("maturity_data", "").strip() or None
+    taste_profile_raw = request.form.get("taste_profile", "").strip() or None
+    food_pairings_raw = request.form.get("food_pairings", "").strip() or None
     new_quantity = int(request.form.get("quantity", 0))
     db.execute(
         """UPDATE wines SET name=?, year=?, type=?, region=?, quantity=?, rating=?,
            notes=?, image=?, purchased_at=?, price=?, drink_from=?, drink_until=?, location=?,
-           grape=?, vivino_id=?, bottle_format=?
+           grape=?, vivino_id=?, bottle_format=?,
+           maturity_data=?, taste_profile=?, food_pairings=?
            WHERE id=?""",
         (
             request.form["name"].strip(),
@@ -691,6 +714,9 @@ def edit(wine_id):
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
             float(bottle_format_raw) if bottle_format_raw else 0.75,
+            maturity_data_raw,
+            taste_profile_raw,
+            food_pairings_raw,
             wine_id,
         ),
     )
@@ -732,8 +758,9 @@ def duplicate(wine_id):
 
     db.execute(
         """INSERT INTO wines (name, year, type, region, quantity, rating, notes, image, added,
-           purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format,
+           maturity_data, taste_profile, food_pairings)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             wine["name"],
             new_year,
@@ -752,6 +779,9 @@ def duplicate(wine_id):
             wine["grape"],
             wine["vivino_id"],
             wine["bottle_format"] if wine["bottle_format"] is not None else 0.75,
+            wine["maturity_data"],
+            wine["taste_profile"],
+            wine["food_pairings"],
         ),
     )
     db.commit()
@@ -1307,7 +1337,20 @@ def analyze_wine():
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
   "notes": "brief tasting notes if visible on label",
-  "bottle_format": number or null
+  "bottle_format": number or null,
+  "maturity_data": {{
+    "youth": [start_year, end_year],
+    "maturity": [start_year, end_year],
+    "peak": [start_year, end_year],
+    "decline": [start_year, end_year]
+  }},
+  "taste_profile": {{
+    "body": 1-5,
+    "tannin": 1-5,
+    "acidity": 1-5,
+    "sweetness": 1-5
+  }},
+  "food_pairings": ["dish1", "dish2", "dish3"]
 }}
 Rules:
 - wine_type MUST be exactly one of the listed values
@@ -1315,8 +1358,11 @@ Rules:
 - drink_from/drink_until: drinking window years. If mentioned on label, use those. Otherwise ESTIMATE a reasonable drinking window based on the wine type, grape variety, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null if not visible
 - bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
+- maturity_data: Estimate the 4 maturity phases (youth, maturity, peak, decline) as year ranges based on wine type, grape, region, and vintage. Youth = early years after bottling, maturity = developing complexity, peak = optimal drinking, decline = past prime. Set to null if vintage is null or unknown.
+- taste_profile: Estimate body (light 1 to full 5), tannin (low 1 to high 5), acidity (low 1 to high 5), sweetness (dry 1 to sweet 5) based on wine type and grape variety. Set to null if wine type is unknown.
+- food_pairings: Suggest 3-5 food pairings based on the wine type and characteristics. Write food names in {lang_name}. Set to null if wine type is unknown.
 - If a field cannot be determined, set it to null or empty string
-- The "notes" field MUST be written in {lang_name}
+- The "notes" and "food_pairings" fields MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""
 
     # Dispatch to the selected provider
@@ -1523,7 +1569,10 @@ def _wine_json_schema():
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
   "notes": "brief tasting notes",
-  "bottle_format": number or null
+  "bottle_format": number or null,
+  "maturity_data": {"youth": [start_year, end_year], "maturity": [start_year, end_year], "peak": [start_year, end_year], "decline": [start_year, end_year]},
+  "taste_profile": {"body": 1-5, "tannin": 1-5, "acidity": 1-5, "sweetness": 1-5},
+  "food_pairings": ["dish1", "dish2", "dish3"]
 }"""
 
 
@@ -1537,8 +1586,11 @@ def _wine_json_rules(lang="en"):
 - drink_from/drink_until: estimate a reasonable drinking window based on wine type, grape, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null
 - bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
+- maturity_data: Estimate the 4 maturity phases (youth, maturity, peak, decline) as year ranges based on wine type, grape, region, and vintage. Youth = early years after bottling, maturity = developing complexity, peak = optimal drinking, decline = past prime. Set to null if vintage is null or unknown.
+- taste_profile: Estimate body (light 1 to full 5), tannin (low 1 to high 5), acidity (low 1 to high 5), sweetness (dry 1 to sweet 5) based on wine type and grape variety. Set to null if wine type is unknown.
+- food_pairings: Suggest 3-5 food pairings based on the wine type and characteristics. Write food names in {lang_name}. Set to null if wine type is unknown.
 - If a field cannot be determined, set it to null or empty string
-- The "notes" field MUST be written in {lang_name}
+- The "notes" and "food_pairings" fields MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""
 
 

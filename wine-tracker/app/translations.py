@@ -227,6 +227,23 @@ TRANSLATIONS = {
     "log_restocked": "nachgefüllt",
     "log_removed": "entfernt",
     "log_chat": "Sommelier-Gespräch",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Reifephasen",
+    "maturity_youth": "Jugend",
+    "maturity_maturity": "Reife",
+    "maturity_peak": "H\u00f6hepunkt",
+    "maturity_decline": "Niedergang",
+    "maturity_today": "Heute",
+    "maturity_excellent": "Exzellent",
+    "maturity_good": "Gut",
+    "maturity_poor": "Schlecht",
+    "taste_profile": "Geschmacksprofil",
+    "taste_body": "K\u00f6rper",
+    "taste_tannin": "Tannin",
+    "taste_acidity": "S\u00e4ure",
+    "taste_sweetness": "S\u00fc\u00dfe",
+    "food_pairings": "Passt zu",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -440,6 +457,23 @@ TRANSLATIONS = {
     "log_restocked": "restocked",
     "log_removed": "removed",
     "log_chat": "Sommelier chat",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Maturity Phases",
+    "maturity_youth": "Youth",
+    "maturity_maturity": "Maturity",
+    "maturity_peak": "Peak",
+    "maturity_decline": "Decline",
+    "maturity_today": "Today",
+    "maturity_excellent": "Excellent",
+    "maturity_good": "Good",
+    "maturity_poor": "Poor",
+    "taste_profile": "Taste Profile",
+    "taste_body": "Body",
+    "taste_tannin": "Tannin",
+    "taste_acidity": "Acidity",
+    "taste_sweetness": "Sweetness",
+    "food_pairings": "Food Pairings",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -653,6 +687,23 @@ TRANSLATIONS = {
     "log_restocked": "réapprovisionné",
     "log_removed": "supprimé",
     "log_chat": "Discussion sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Phases de maturit\u00e9",
+    "maturity_youth": "Jeunesse",
+    "maturity_maturity": "Maturit\u00e9",
+    "maturity_peak": "Apog\u00e9e",
+    "maturity_decline": "D\u00e9clin",
+    "maturity_today": "Aujourd'hui",
+    "maturity_excellent": "Excellent",
+    "maturity_good": "Bon",
+    "maturity_poor": "Mauvais",
+    "taste_profile": "Profil gustatif",
+    "taste_body": "Corps",
+    "taste_tannin": "Tanin",
+    "taste_acidity": "Acidit\u00e9",
+    "taste_sweetness": "Sucrosit\u00e9",
+    "food_pairings": "Accords mets",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -866,6 +917,23 @@ TRANSLATIONS = {
     "log_restocked": "rifornito",
     "log_removed": "rimosso",
     "log_chat": "Conversazione sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fasi di maturazione",
+    "maturity_youth": "Giovinezza",
+    "maturity_maturity": "Maturit\u00e0",
+    "maturity_peak": "Apice",
+    "maturity_decline": "Declino",
+    "maturity_today": "Oggi",
+    "maturity_excellent": "Eccellente",
+    "maturity_good": "Buono",
+    "maturity_poor": "Scarso",
+    "taste_profile": "Profilo gustativo",
+    "taste_body": "Corpo",
+    "taste_tannin": "Tannino",
+    "taste_acidity": "Acidit\u00e0",
+    "taste_sweetness": "Dolcezza",
+    "food_pairings": "Abbinamenti",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1078,7 +1146,24 @@ TRANSLATIONS = {
     "log_consumed": "bebido",
     "log_restocked": "repuesto",
     "log_removed": "eliminado",
-    "log_chat": "Conversación sommelier",
+    "log_chat": "Conversaci\u00f3n sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fases de madurez",
+    "maturity_youth": "Juventud",
+    "maturity_maturity": "Madurez",
+    "maturity_peak": "Apogeo",
+    "maturity_decline": "Declive",
+    "maturity_today": "Hoy",
+    "maturity_excellent": "Excelente",
+    "maturity_good": "Bueno",
+    "maturity_poor": "Malo",
+    "taste_profile": "Perfil de sabor",
+    "taste_body": "Cuerpo",
+    "taste_tannin": "Tanino",
+    "taste_acidity": "Acidez",
+    "taste_sweetness": "Dulzura",
+    "food_pairings": "Maridaje",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1292,6 +1377,23 @@ TRANSLATIONS = {
     "log_restocked": "reabastecido",
     "log_removed": "removido",
     "log_chat": "Conversa sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fases de matura\u00e7\u00e3o",
+    "maturity_youth": "Juventude",
+    "maturity_maturity": "Maturidade",
+    "maturity_peak": "Apogeu",
+    "maturity_decline": "Decl\u00ednio",
+    "maturity_today": "Hoje",
+    "maturity_excellent": "Excelente",
+    "maturity_good": "Bom",
+    "maturity_poor": "Mau",
+    "taste_profile": "Perfil de sabor",
+    "taste_body": "Corpo",
+    "taste_tannin": "Tanino",
+    "taste_acidity": "Acidez",
+    "taste_sweetness": "Do\u00e7ura",
+    "food_pairings": "Harmoniza\u00e7\u00e3o",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1505,6 +1607,23 @@ TRANSLATIONS = {
     "log_restocked": "bijgevuld",
     "log_removed": "verwijderd",
     "log_chat": "Sommelier gesprek",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Rijpingsfasen",
+    "maturity_youth": "Jeugd",
+    "maturity_maturity": "Rijpheid",
+    "maturity_peak": "Hoogtepunt",
+    "maturity_decline": "Verval",
+    "maturity_today": "Vandaag",
+    "maturity_excellent": "Uitstekend",
+    "maturity_good": "Goed",
+    "maturity_poor": "Slecht",
+    "taste_profile": "Smaakprofiel",
+    "taste_body": "Body",
+    "taste_tannin": "Tannine",
+    "taste_acidity": "Zuurgraad",
+    "taste_sweetness": "Zoetheid",
+    "food_pairings": "Past bij",
 },
 
 }  # end TRANSLATIONS

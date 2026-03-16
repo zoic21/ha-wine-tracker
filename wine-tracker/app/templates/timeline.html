@@ -66,6 +66,7 @@
 
 <!-- ═══════════════ WINE VIEW MODAL ═══════════════ -->
 {% include '_wine_view_modal.html' %}
+{% include '_wine_view_extras.html' %}
 
 {% include '_settings_modal.html' %}
 
@@ -150,20 +151,23 @@ function openViewModal(id, wine) {
 
   var html = '';
 
+  var ribbonHtml = '';
+  if (w.type) {
+    var typeKey = 'wine_type_' + w.type;
+    var typeLabel = T[typeKey] || w.type;
+    ribbonHtml = '<span class="ribbon ribbon-' + escapeHtml(w.type.toLowerCase().replace(/[éö]/g, function(c){return c==='é'?'e':'oe';})) + '">' + escapeHtml(typeLabel) + '</span>';
+  }
   if (w.image) {
     html += '<div class="view-photo-panel" onclick="openLightbox(\'' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '\')">'
+          + ribbonHtml
           + '<img src="' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '" alt="' + escapeHtml(w.name) + '">'
           + '</div>';
+  } else if (ribbonHtml) {
+    html += '<div class="view-photo-panel view-no-image">' + ribbonHtml + '</div>';
   }
 
   html += '<div class="view-fields-panel">';
   html += '<div class="view-name">' + escapeHtml(w.name) + '</div>';
-
-  if (w.type) {
-    var typeKey = 'wine_type_' + w.type;
-    var typeLabel = T[typeKey] || w.type;
-    html += '<span class="view-type-badge ribbon-' + escapeHtml(w.type) + '">' + escapeHtml(typeLabel) + '</span>';
-  }
 
   var meta = [];
   if (w.year) meta.push('<span>' + w.year + '</span>');
@@ -200,6 +204,11 @@ function openViewModal(id, wine) {
   if (details) html += '<div class="view-details">' + details + '</div>';
 
   if (w.notes) html += '<div class="view-notes">' + escapeHtml(w.notes) + '</div>';
+
+  // Maturity graph, taste profile, food pairings
+  if (typeof buildWineExtrasHtml === 'function') {
+    html += buildWineExtrasHtml(w);
+  }
 
   html += '<div class="view-actions">';
   if (!AUTH_READONLY) {

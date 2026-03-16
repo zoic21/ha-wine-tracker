@@ -251,3 +251,79 @@ class TestDatabaseOperations:
         stats = sample_wine["stats"]
         assert stats["total"] == 3
         assert stats["types"] == 1
+
+
+class TestMaturityTasteFoodColumns:
+    """Tests for maturity_data, taste_profile, food_pairings columns."""
+
+    def test_migration_adds_new_columns(self, app):
+        """init_db() should add maturity_data, taste_profile, food_pairings columns."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(wines)")}
+        conn.close()
+        assert "maturity_data" in cols
+        assert "taste_profile" in cols
+        assert "food_pairings" in cols
+
+    def test_migration_from_old_schema_adds_new_columns(self):
+        """Migrating from a schema without maturity/taste/food should add them."""
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS wines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                year INTEGER,
+                type TEXT,
+                region TEXT,
+                quantity INTEGER DEFAULT 1,
+                rating INTEGER DEFAULT 0,
+                notes TEXT,
+                image TEXT,
+                added TEXT
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+        wine_app.init_db()
+
+        conn = sqlite3.connect(wine_app.DB_PATH)
+        cols = {row[1] for row in conn.execute("PRAGMA table_info(wines)")}
+        conn.close()
+
+        for col in ["maturity_data", "taste_profile", "food_pairings"]:
+            assert col in cols, f"Migration did not add column: {col}"
+
+    def test_new_columns_default_null(self, app, db):
+        """New columns should default to NULL."""
+        db.execute(
+            "INSERT INTO wines (name, quantity) VALUES (?, ?)",
+            ("Test Wine", 1)
+        )
+        db.commit()
+        row = db.execute(
+            "SELECT maturity_data, taste_profile, food_pairings FROM wines WHERE name='Test Wine'"
+        ).fetchone()
+        assert row["maturity_data"] is None
+        assert row["taste_profile"] is None
+        assert row["food_pairings"] is None
+
+    def test_store_and_retrieve_json_data(self, app, db):
+        """JSON data should be stored and retrievable from new columns."""
+        import json
+        maturity = json.dumps({"youth": [2020, 2024], "maturity": [2025, 2031],
+                               "peak": [2032, 2044], "decline": [2045, 2054]})
+        taste = json.dumps({"body": 4, "tannin": 5, "acidity": 3, "sweetness": 1})
+        food = json.dumps(["Lamb", "Beef stew", "Hard cheese"])
+
+        db.execute(
+            "INSERT INTO wines (name, quantity, maturity_data, taste_profile, food_pairings) VALUES (?,?,?,?,?)",
+            ("JSON Wine", 1, maturity, taste, food)
+        )
+        db.commit()
+        row = db.execute(
+            "SELECT maturity_data, taste_profile, food_pairings FROM wines WHERE name='JSON Wine'"
+        ).fetchone()
+        assert json.loads(row["maturity_data"])["peak"] == [2032, 2044]
+        assert json.loads(row["taste_profile"])["body"] == 4
+        assert "Lamb" in json.loads(row["food_pairings"])

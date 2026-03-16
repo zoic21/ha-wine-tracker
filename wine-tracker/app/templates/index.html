@@ -253,6 +253,9 @@
       <input type="hidden" name="ai_image" id="aiImageField" value="">
       <input type="hidden" name="vivino_id" id="wine_vivino_id" value="">
       <input type="hidden" name="delete_image" id="deleteImageField" value="">
+      <input type="hidden" name="maturity_data" id="wine_maturity_data" value="">
+      <input type="hidden" name="taste_profile" id="wine_taste_profile" value="">
+      <input type="hidden" name="food_pairings" id="wine_food_pairings" value="">
       <div class="modal-body" id="formStep">
 
         <!-- Photo: shown inline on mobile, side panel on wide screens -->
@@ -355,6 +358,7 @@
 
 <!-- ═══════════════ WINE VIEW MODAL ═══════════════ -->
 {% include '_wine_view_modal.html' %}
+{% include '_wine_view_extras.html' %}
 
 <!-- ═══════════════ SETTINGS MODAL ═══════════════ -->
 {% include '_settings_modal.html' %}
@@ -691,6 +695,9 @@ function openWineModal(id, wine) {
   document.getElementById('wine_grape').value = w.grape || '';
   document.getElementById('wine_bottle_format').value = w.bottle_format || '0.75';
   document.getElementById('wine_vivino_id').value = w.vivino_id || '';
+  document.getElementById('wine_maturity_data').value = w.maturity_data ? JSON.stringify(w.maturity_data) : '';
+  document.getElementById('wine_taste_profile').value = w.taste_profile ? JSON.stringify(w.taste_profile) : '';
+  document.getElementById('wine_food_pairings').value = w.food_pairings ? JSON.stringify(w.food_pairings) : '';
 
   // Stars
   for (let i = 1; i <= 5; i++) {
@@ -1284,7 +1291,14 @@ var BOTTLE_FORMATS = {
 
 function viewFromCard(el) {
   var d = getCardData(el);
-  openViewModal(d.id, d.wine);
+  // Fetch full wine data from API to include maturity/taste/food pairings
+  fetch(INGRESS + '/api/wine/' + d.id)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) openViewModal(data.wine.id, data.wine);
+      else openViewModal(d.id, d.wine);
+    })
+    .catch(function() { openViewModal(d.id, d.wine); });
 }
 
 function viewRow(icon, label, value) {
@@ -1303,10 +1317,19 @@ function openViewModal(id, wine) {
   var html = '';
 
   // Photo panel (on right on desktop)
+  var ribbonHtml = '';
+  if (w.type) {
+    var typeKey = 'wine_type_' + w.type;
+    var typeLabel = T[typeKey] || w.type;
+    ribbonHtml = '<span class="ribbon ribbon-' + escapeHtml(w.type.toLowerCase().replace(/[éö]/g, function(c){return c==='é'?'e':'oe';})) + '">' + escapeHtml(typeLabel) + '</span>';
+  }
   if (w.image) {
     html += '<div class="view-photo-panel" onclick="openLightbox(\'' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '\')">'
+          + ribbonHtml
           + '<img src="' + INGRESS + '/uploads/' + encodeURIComponent(w.image) + '" alt="' + escapeHtml(w.name) + '">'
           + '</div>';
+  } else if (ribbonHtml) {
+    html += '<div class="view-photo-panel view-no-image">' + ribbonHtml + '</div>';
   }
 
   // Fields panel (on left on desktop)
@@ -1314,13 +1337,6 @@ function openViewModal(id, wine) {
 
   // Name
   html += '<div class="view-name">' + escapeHtml(w.name) + '</div>';
-
-  // Type badge
-  if (w.type) {
-    var typeKey = 'wine_type_' + w.type;
-    var typeLabel = T[typeKey] || w.type;
-    html += '<span class="view-type-badge ribbon-' + escapeHtml(w.type) + '">' + escapeHtml(typeLabel) + '</span>';
-  }
 
   // Meta: year + region
   var meta = [];
@@ -1384,6 +1400,11 @@ function openViewModal(id, wine) {
     html += '<div class="view-notes">' + escapeHtml(w.notes) + '</div>';
   }
 
+  // Maturity graph, taste profile, food pairings
+  if (typeof buildWineExtrasHtml === 'function') {
+    html += buildWineExtrasHtml(w);
+  }
+
   // Action buttons
   html += '<div class="view-actions">';
   if (!AUTH_READONLY) {
@@ -1435,6 +1456,20 @@ function populateFormMerge(fields, imageFilename) {
   // Only update bottle_format if AI detected a non-standard size
   if (fields.bottle_format && fields.bottle_format != 0.75) {
     document.getElementById('wine_bottle_format').value = fields.bottle_format;
+    filled++;
+  }
+
+  // Store AI maturity/taste/food data as JSON in hidden fields
+  if (fields.maturity_data) {
+    document.getElementById('wine_maturity_data').value = JSON.stringify(fields.maturity_data);
+    filled++;
+  }
+  if (fields.taste_profile) {
+    document.getElementById('wine_taste_profile').value = JSON.stringify(fields.taste_profile);
+    filled++;
+  }
+  if (fields.food_pairings) {
+    document.getElementById('wine_food_pairings').value = JSON.stringify(fields.food_pairings);
     filled++;
   }
 

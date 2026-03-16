@@ -69,6 +69,14 @@ class TestAnalyzeWine:
             "drink_from": 2020,
             "drink_until": 2040,
             "bottle_format": 0.75,
+            "maturity_data": {
+                "youth": [2015, 2020],
+                "maturity": [2021, 2028],
+                "peak": [2029, 2040],
+                "decline": [2041, 2055],
+            },
+            "taste_profile": {"body": 5, "tannin": 5, "acidity": 3, "sweetness": 1},
+            "food_pairings": ["Lamm", "Rindereintopf", "Hartkäse"],
         })
 
         fake_image = (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100), "label.png")
@@ -885,3 +893,149 @@ class TestChatRecordingToggle:
         data = json.loads(resp.data)
         chat_entries = [e for e in data["entries"] if e["action"] == "chat"]
         assert len(chat_entries) == 0
+
+
+# ── Maturity / Taste / Food Pairings ─────────────────────────────────────────
+
+class TestMaturityTasteFood:
+    """Tests for AI maturity_data, taste_profile, and food_pairings fields."""
+
+    @patch("app._call_anthropic")
+    @patch("app.load_options")
+    def test_ai_returns_maturity_taste_food(self, mock_opts, mock_call, client):
+        """AI analysis should return maturity_data, taste_profile, food_pairings."""
+        mock_opts.return_value = {
+            **wine_app.HA_OPTIONS,
+            "ai_provider": "anthropic",
+            "anthropic_api_key": "sk-test",
+        }
+        mock_call.return_value = json.dumps({
+            "name": "Barolo Riserva",
+            "wine_type": "Rotwein",
+            "vintage": 2016,
+            "region": "Piemont, IT",
+            "grape": "Nebbiolo",
+            "price": None,
+            "notes": "Complex",
+            "drink_from": 2026,
+            "drink_until": 2046,
+            "bottle_format": 0.75,
+            "maturity_data": {
+                "youth": [2016, 2023],
+                "maturity": [2024, 2030],
+                "peak": [2031, 2042],
+                "decline": [2043, 2055],
+            },
+            "taste_profile": {"body": 5, "tannin": 5, "acidity": 4, "sweetness": 1},
+            "food_pairings": ["Lamm", "Trüffel", "Hartkäse"],
+        })
+
+        fake_image = (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100), "label.png")
+        resp = client.post(
+            "/api/analyze-wine",
+            data={"image": fake_image},
+            content_type="multipart/form-data",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert "maturity_data" in data["fields"]
+        assert data["fields"]["maturity_data"]["peak"] == [2031, 2042]
+        assert "taste_profile" in data["fields"]
+        assert data["fields"]["taste_profile"]["body"] == 5
+        assert "food_pairings" in data["fields"]
+        assert "Lamm" in data["fields"]["food_pairings"]
+
+    def test_add_wine_with_maturity_data(self, client):
+        """Adding a wine with maturity/taste/food data should save to DB."""
+        maturity = json.dumps({"youth": [2020, 2024], "maturity": [2025, 2030],
+                               "peak": [2031, 2040], "decline": [2041, 2050]})
+        taste = json.dumps({"body": 4, "tannin": 3, "acidity": 3, "sweetness": 1})
+        food = json.dumps(["Steak", "Risotto"])
+
+        resp = client.post(
+            "/add",
+            data={
+                "name": "Test Maturity Wine",
+                "year": "2020",
+                "type": "Rotwein",
+                "region": "Toskana, IT",
+                "quantity": "2",
+                "rating": "4",
+                "notes": "",
+                "purchased_at": "",
+                "price": "",
+                "drink_from": "2025",
+                "drink_until": "2040",
+                "location": "",
+                "grape": "Sangiovese",
+                "bottle_format": "0.75",
+                "maturity_data": maturity,
+                "taste_profile": taste,
+                "food_pairings": food,
+            },
+            headers=AJAX,
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        wine_id = data["wine"]["id"]
+
+        # Fetch via API and verify parsed JSON
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        w = data["wine"]
+        assert w["maturity_data"]["peak"] == [2031, 2040]
+        assert w["taste_profile"]["body"] == 4
+        assert "Steak" in w["food_pairings"]
+
+    def test_api_wine_without_maturity_returns_null(self, client, sample_wine):
+        """Wine without maturity data should return null for new fields."""
+        wine_id = sample_wine["wine"]["id"]
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data["wine"]["maturity_data"] is None
+        assert data["wine"]["taste_profile"] is None
+        assert data["wine"]["food_pairings"] is None
+
+    def test_edit_wine_saves_maturity_data(self, client, sample_wine):
+        """Editing a wine should save maturity/taste/food data."""
+        wine_id = sample_wine["wine"]["id"]
+        maturity = json.dumps({"youth": [2020, 2022], "maturity": [2023, 2027],
+                               "peak": [2028, 2035], "decline": [2036, 2045]})
+        taste = json.dumps({"body": 3, "tannin": 2, "acidity": 4, "sweetness": 2})
+        food = json.dumps(["Fish", "Salad"])
+
+        resp = client.post(
+            f"/edit/{wine_id}",
+            data={
+                "name": "Ch\u00e2teau Test",
+                "year": "2020",
+                "type": "Rotwein",
+                "region": "Bordeaux, FR",
+                "quantity": "3",
+                "rating": "4",
+                "notes": "Excellent test wine",
+                "purchased_at": "Testshop",
+                "price": "29.90",
+                "drink_from": "2023",
+                "drink_until": "2030",
+                "location": "Keller A",
+                "grape": "Merlot",
+                "bottle_format": "0.75",
+                "maturity_data": maturity,
+                "taste_profile": taste,
+                "food_pairings": food,
+            },
+            headers=AJAX,
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+
+        # Verify
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["wine"]["maturity_data"]["peak"] == [2028, 2035]
+        assert data["wine"]["taste_profile"]["acidity"] == 4
+        assert "Fish" in data["wine"]["food_pairings"]

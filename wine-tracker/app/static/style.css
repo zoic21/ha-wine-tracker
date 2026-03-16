@@ -850,7 +850,7 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
   #viewModal .modal-body {
     display: grid;
     grid-template-columns: 1fr 340px;
-    gap: 1.25rem;
+    gap: 2.5rem;
     align-items: start;
   }
   .view-photo-panel {
@@ -867,14 +867,14 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
     object-fit: contain;
     object-position: center;
     border-radius: var(--radius);
-    cursor: zoom-in;
+    cursor: pointer;
   }
   .view-fields-panel { order: 1; }
 }
 
 .view-photo-panel {
-  width: 100%; max-height: 300px; overflow: hidden;
-  border-radius: var(--radius); cursor: zoom-in;
+  width: 100%; max-height: 600px; overflow: hidden;
+  border-radius: var(--radius); cursor: pointer;
   margin-bottom: .5rem;
 }
 .view-photo-panel img {
@@ -887,10 +887,9 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
   margin-bottom: .25rem;
 }
 
-.view-type-badge {
-  display: inline-block; font-size: .7rem; font-weight: 600;
-  padding: .15rem .5rem; border-radius: 4px;
-  margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .03em;
+.view-photo-panel {
+  position: relative;
+  overflow: hidden;
 }
 
 .view-meta {
@@ -942,6 +941,127 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
 
 .view-actions {
   display: flex; gap: .75rem; padding-top: .5rem;
+}
+
+/* ── View Modal: Maturity Graph ───────────────────────────────────────────── */
+.maturity-section {
+  padding: .75rem 0;
+  border-top: 1px solid var(--border);
+}
+.maturity-section h4,
+.taste-section h4,
+.food-section h4 {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 .5rem 0;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.maturity-section h4 .mdi,
+.taste-section h4 .mdi,
+.food-section h4 .mdi {
+  color: var(--muted);
+  font-size: 1rem;
+}
+.maturity-graph {
+  position: relative;
+  width: 100%;
+}
+.maturity-graph svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.maturity-labels {
+  display: flex;
+  margin-top: 4px;
+}
+.maturity-label {
+  text-align: center;
+  font-size: .7rem;
+  line-height: 1.3;
+  color: var(--muted);
+  overflow: hidden;
+}
+.maturity-label.active {
+  color: var(--text);
+  font-weight: 600;
+}
+.maturity-label-name {
+  display: block;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.maturity-label-years {
+  display: block;
+  font-size: .65rem;
+  opacity: .7;
+}
+
+/* ── View Modal: Taste Profile ────────────────────────────────────────────── */
+.taste-section {
+  padding: .75rem 0;
+  border-top: 1px solid var(--border);
+}
+.taste-rows {
+  display: flex;
+  flex-direction: column;
+  gap: .4rem;
+}
+.taste-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .82rem;
+}
+.taste-label {
+  color: var(--muted);
+  width: 60px;
+  flex-shrink: 0;
+}
+.taste-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.taste-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width .4s ease;
+}
+.taste-value {
+  color: var(--text);
+  font-weight: 500;
+  font-size: .75rem;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── View Modal: Food Pairings ────────────────────────────────────────────── */
+.food-section {
+  padding: .75rem 0;
+  border-top: 1px solid var(--border);
+}
+.food-pairings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+}
+.food-tag {
+  display: inline-block;
+  padding: .2rem .6rem;
+  font-size: .78rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
 }
 
 /* ── Stats: Content ────────────────────────────────────────────────────────── */
