@@ -4,7 +4,7 @@ import secrets
 import shutil
 import sqlite3
 import uuid
-from datetime import date
+from datetime import date, datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from translations import TRANSLATIONS
@@ -242,8 +242,9 @@ def check_readonly():
     if session.get("role") != "readonly":
         return
     if request.method in ("POST", "PUT", "DELETE"):
-        # Allow login POST and chat API for readonly users
-        allowed = {"login", "api_chat"}
+        # Allow login POST, chat API, chat sessions for readonly users
+        # (session delete is blocked in the endpoint itself)
+        allowed = {"login", "api_chat", "api_chat_sessions_list", "api_chat_session_detail"}
         if request.endpoint not in allowed:
             if request.is_json or request.headers.get("X-Requested-With"):
                 return jsonify(ok=False, error="readonly"), 403
@@ -280,7 +281,7 @@ def format_date_filter(value):
 @app.context_processor
 def inject_globals():
     ai_enabled = _is_ai_configured(load_options())
-    return {
+    ctx = {
         "ingress": g.get("ingress", ""),
         "currency": HA_OPTIONS.get("currency", "CHF"),
         "t": T,
@@ -289,7 +290,37 @@ def inject_globals():
         "auth_user": session.get("user") if AUTH_ENABLED else None,
         "auth_readonly": session.get("role") == "readonly" if AUTH_ENABLED else False,
         "app_version": APP_VERSION,
+        "wine_types": WINE_TYPES,
     }
+    # Provide form datalist values for the shared edit modal on every page
+    try:
+        db = get_db()
+        ctx["used_regions_list"] = [
+            row[0] for row in db.execute(
+                "SELECT DISTINCT region FROM wines WHERE region IS NOT NULL AND region != '' ORDER BY region"
+            ).fetchall()
+        ]
+        ctx["used_grapes"] = [
+            row[0] for row in db.execute(
+                "SELECT DISTINCT grape FROM wines WHERE grape IS NOT NULL AND grape != '' ORDER BY grape"
+            ).fetchall()
+        ]
+        ctx["used_purchased_at"] = [
+            row[0] for row in db.execute(
+                "SELECT DISTINCT purchased_at FROM wines WHERE purchased_at IS NOT NULL AND purchased_at != '' ORDER BY purchased_at"
+            ).fetchall()
+        ]
+        ctx["used_locations"] = [
+            row[0] for row in db.execute(
+                "SELECT DISTINCT location FROM wines WHERE location IS NOT NULL AND location != '' ORDER BY location"
+            ).fetchall()
+        ]
+    except Exception:
+        ctx.setdefault("used_regions_list", [])
+        ctx.setdefault("used_grapes", [])
+        ctx.setdefault("used_purchased_at", [])
+        ctx.setdefault("used_locations", [])
+    return ctx
 
 
 def ingress_redirect(endpoint, **kwargs):
@@ -347,10 +378,58 @@ def init_db():
             "grape":          "TEXT",
             "vivino_id":      "INTEGER",
             "bottle_format":  "REAL DEFAULT 0.75",
+            "maturity_data":  "TEXT",
+            "taste_profile":  "TEXT",
+            "food_pairings":  "TEXT",
         }
         for col, dtype in migrations.items():
             if col not in existing:
                 db.execute(f"ALTER TABLE wines ADD COLUMN {col} {dtype}")
+
+        # ── timeline table ────────────────────────────────────────────────
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS timeline (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                wine_id   INTEGER NOT NULL,
+                action    TEXT NOT NULL,
+                quantity  INTEGER DEFAULT 1,
+                timestamp TEXT NOT NULL,
+                FOREIGN KEY (wine_id) REFERENCES wines(id)
+            )
+        """)
+
+        # Backfill: insert 'added' entries for existing wines (only on first migration)
+        log_count = db.execute("SELECT COUNT(*) FROM timeline").fetchone()[0]
+        if log_count == 0:
+            wines = db.execute("SELECT id, quantity, added FROM wines").fetchall()
+            for w in wines:
+                ts = w[2] or date.today().isoformat()
+                qty = w[1] if w[1] else 1
+                db.execute(
+                    "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+                    (w[0], "added", qty, ts),
+                )
+
+        # ── chat session tables ───────────────────────────────────────────
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS chat_sessions (
+                id        INTEGER PRIMARY KEY AUTOINCREMENT,
+                title     TEXT,
+                created   TEXT NOT NULL,
+                updated   TEXT NOT NULL
+            )
+        """)
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id INTEGER NOT NULL,
+                role       TEXT NOT NULL,
+                content    TEXT NOT NULL,
+                timestamp  TEXT NOT NULL,
+                FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+            )
+        """)
+
         db.commit()
 
 
@@ -381,7 +460,16 @@ def wine_json(wine_id):
     row = db.execute("SELECT * FROM wines WHERE id=?", (wine_id,)).fetchone()
     if not row:
         return None
-    return dict(row)
+    d = dict(row)
+    # Parse JSON text columns into real objects
+    for key in ("maturity_data", "taste_profile", "food_pairings"):
+        raw = d.get(key)
+        if raw:
+            try:
+                d[key] = json.loads(raw)
+            except (json.JSONDecodeError, TypeError):
+                d[key] = None
+    return d
 
 
 def stats_json():
@@ -487,43 +575,10 @@ def index():
         ).fetchall()
     ]
 
-    # Distinct locations for datalist autocomplete
-    used_locations = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT location FROM wines WHERE location IS NOT NULL AND location != '' ORDER BY location"
-        ).fetchall()
-    ]
-
-    # Distinct grape varieties for datalist autocomplete
-    used_grapes = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT grape FROM wines WHERE grape IS NOT NULL AND grape != '' ORDER BY grape"
-        ).fetchall()
-    ]
-
-    # Distinct purchased_at values for datalist autocomplete
-    used_purchased_at = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT purchased_at FROM wines WHERE purchased_at IS NOT NULL AND purchased_at != '' ORDER BY purchased_at"
-        ).fetchall()
-    ]
-
-    # Distinct regions for datalist autocomplete
-    used_regions = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT region FROM wines WHERE region IS NOT NULL AND region != '' ORDER BY region"
-        ).fetchall()
-    ]
-
     return render_template(
         "index.html",
         wines=wines,
-        wine_types=WINE_TYPES,
         used_types=used_types,
-        used_locations=used_locations,
-        used_grapes=used_grapes,
-        used_purchased_at=used_purchased_at,
-        used_regions_list=used_regions,
         query=q,
         active_type=t,
         show_empty=show_empty,
@@ -543,11 +598,15 @@ def add():
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
     bottle_format_raw = request.form.get("bottle_format", "").strip()
+    maturity_data_raw = request.form.get("maturity_data", "").strip() or None
+    taste_profile_raw = request.form.get("taste_profile", "").strip() or None
+    food_pairings_raw = request.form.get("food_pairings", "").strip() or None
     cur = db.execute(
         """INSERT INTO wines
            (name, year, type, region, quantity, rating, notes, image, added,
-            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format,
+            maturity_data, taste_profile, food_pairings)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             request.form["name"].strip(),
             request.form.get("year") or None,
@@ -566,10 +625,20 @@ def add():
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
             float(bottle_format_raw) if bottle_format_raw else 0.75,
+            maturity_data_raw,
+            taste_profile_raw,
+            food_pairings_raw,
         ),
     )
     db.commit()
     new_id = cur.lastrowid
+    # Log the addition
+    qty = int(request.form.get("quantity", 1))
+    db.execute(
+        "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+        (new_id, "added", qty, datetime.now().isoformat()),
+    )
+    db.commit()
     if is_ajax():
         return jsonify({"ok": True, "wine": wine_json(new_id), "stats": stats_json()})
     path = g.get("ingress", "") + url_for("index") + f"?new={new_id}"
@@ -611,20 +680,26 @@ def edit(wine_id):
                     pass
             image = ai_img
 
+    old_quantity = wine["quantity"] or 0
     price_raw = request.form.get("price", "").strip()
     vivino_raw = request.form.get("vivino_id", "").strip()
     bottle_format_raw = request.form.get("bottle_format", "").strip()
+    maturity_data_raw = request.form.get("maturity_data", "").strip() or None
+    taste_profile_raw = request.form.get("taste_profile", "").strip() or None
+    food_pairings_raw = request.form.get("food_pairings", "").strip() or None
+    new_quantity = int(request.form.get("quantity", 0))
     db.execute(
         """UPDATE wines SET name=?, year=?, type=?, region=?, quantity=?, rating=?,
            notes=?, image=?, purchased_at=?, price=?, drink_from=?, drink_until=?, location=?,
-           grape=?, vivino_id=?, bottle_format=?
+           grape=?, vivino_id=?, bottle_format=?,
+           maturity_data=?, taste_profile=?, food_pairings=?
            WHERE id=?""",
         (
             request.form["name"].strip(),
             request.form.get("year") or None,
             request.form.get("type"),
             request.form.get("region", "").strip(),
-            int(request.form.get("quantity", 0)),
+            new_quantity,
             int(request.form.get("rating", 0)),
             request.form.get("notes", "").strip(),
             image,
@@ -636,9 +711,23 @@ def edit(wine_id):
             request.form.get("grape", "").strip() or None,
             int(vivino_raw) if vivino_raw else None,
             float(bottle_format_raw) if bottle_format_raw else 0.75,
+            maturity_data_raw,
+            taste_profile_raw,
+            food_pairings_raw,
             wine_id,
         ),
     )
+    # Log quantity changes
+    if new_quantity < old_quantity:
+        db.execute(
+            "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+            (wine_id, "consumed", old_quantity - new_quantity, datetime.now().isoformat()),
+        )
+    elif new_quantity > old_quantity:
+        db.execute(
+            "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+            (wine_id, "restocked", new_quantity - old_quantity, datetime.now().isoformat()),
+        )
     db.commit()
     if is_ajax():
         return jsonify({"ok": True, "wine": wine_json(wine_id), "stats": stats_json()})
@@ -666,8 +755,9 @@ def duplicate(wine_id):
 
     db.execute(
         """INSERT INTO wines (name, year, type, region, quantity, rating, notes, image, added,
-           purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format,
+           maturity_data, taste_profile, food_pairings)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             wine["name"],
             new_year,
@@ -686,10 +776,20 @@ def duplicate(wine_id):
             wine["grape"],
             wine["vivino_id"],
             wine["bottle_format"] if wine["bottle_format"] is not None else 0.75,
+            wine["maturity_data"],
+            wine["taste_profile"],
+            wine["food_pairings"],
         ),
     )
     db.commit()
     new_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+    # Log the duplicated wine as added
+    dup_qty = int(request.form.get("quantity", wine["quantity"]))
+    db.execute(
+        "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+        (new_id, "added", dup_qty, datetime.now().isoformat()),
+    )
+    db.commit()
     if is_ajax():
         return jsonify({"ok": True, "wine": wine_json(new_id), "stats": stats_json()})
     return ingress_redirect("index")
@@ -698,7 +798,13 @@ def duplicate(wine_id):
 @app.route("/delete/<int:wine_id>", methods=["POST"])
 def delete(wine_id):
     db = get_db()
-    wine = db.execute("SELECT image FROM wines WHERE id=?", (wine_id,)).fetchone()
+    wine = db.execute("SELECT image, quantity FROM wines WHERE id=?", (wine_id,)).fetchone()
+    # Log removal before deleting
+    if wine:
+        db.execute(
+            "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?,?,?,?)",
+            (wine_id, "removed", wine["quantity"] or 0, datetime.now().isoformat()),
+        )
     if wine and wine["image"]:
         # Only delete image if no other wine uses it
         count = db.execute(
@@ -724,10 +830,85 @@ def chat_page():
     return render_template("chat.html")
 
 
+@app.route("/timeline")
+def timeline_page():
+    return render_template("timeline.html")
+
+
+@app.route("/api/timeline")
+def api_timeline():
+    db = get_db()
+    months_param = request.args.get("months")
+
+    sql = """
+        SELECT wl.id, wl.wine_id, w.name as wine_name, w.image as wine_image,
+               w.type as wine_type, wl.action, wl.quantity, wl.timestamp
+        FROM timeline wl
+        LEFT JOIN wines w ON wl.wine_id = w.id
+    """
+    params = []
+    if months_param:
+        try:
+            months = int(months_param)
+            now = datetime.now()
+            year = now.year
+            month = now.month - months
+            while month < 1:
+                month += 12
+                year -= 1
+            cutoff = now.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+            sql += " WHERE wl.timestamp >= ? "
+            params.append(cutoff.isoformat())
+        except (ValueError, TypeError):
+            pass
+
+    sql += " ORDER BY wl.timestamp DESC"
+
+    rows = db.execute(sql, params).fetchall()
+
+    # Group all entries with same wine_id + action + date (regardless of order)
+    grouped = {}
+    for r in rows:
+        day = r["timestamp"][:10] if r["timestamp"] else ""
+        # Chat entries are never grouped (each is a unique conversation)
+        if r["action"] == "chat":
+            key = ("chat", r["id"])
+        else:
+            key = (r["wine_id"], r["action"], day)
+        if key in grouped:
+            grouped[key]["quantity"] += r["quantity"]
+        else:
+            # For chat entries (wine_id=0), look up session title
+            wine_name = r["wine_name"]
+            if r["action"] == "chat" and r["wine_id"] == 0:
+                # Try to get session title and id from the most recent chat session around this timestamp
+                session_row = db.execute(
+                    "SELECT id, title FROM chat_sessions WHERE created <= ? ORDER BY created DESC LIMIT 1",
+                    (r["timestamp"],),
+                ).fetchone()
+                wine_name = session_row["title"] if session_row and session_row["title"] else T.get("log_chat", "Sommelier chat")
+            elif not wine_name:
+                wine_name = "(deleted)"
+            entry = {
+                "id": r["id"],
+                "wine_id": r["wine_id"],
+                "wine_name": wine_name,
+                "wine_image": r["wine_image"],
+                "wine_type": r["wine_type"],
+                "action": r["action"],
+                "quantity": r["quantity"],
+                "timestamp": r["timestamp"],
+            }
+            if r["action"] == "chat" and session_row:
+                entry["session_id"] = session_row["id"]
+            grouped[key] = entry
+    entries = sorted(grouped.values(), key=lambda e: e["timestamp"], reverse=True)
+    return jsonify(ok=True, entries=entries)
+
+
 @app.route("/stats")
 def stats_page():
     db = get_db()
-    from datetime import datetime
     current_year = datetime.now().year
 
     # Total bottles & distinct wines
@@ -856,28 +1037,6 @@ def stats_page():
 
     type_translations = {t: T.get(f"wine_type_{t}", t) for t in WINE_TYPES}
 
-    # Datalist values for edit modal
-    used_locations = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT location FROM wines WHERE location IS NOT NULL AND location != '' ORDER BY location"
-        ).fetchall()
-    ]
-    used_grapes = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT grape FROM wines WHERE grape IS NOT NULL AND grape != '' ORDER BY grape"
-        ).fetchall()
-    ]
-    used_purchased_at = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT purchased_at FROM wines WHERE purchased_at IS NOT NULL AND purchased_at != '' ORDER BY purchased_at"
-        ).fetchall()
-    ]
-    used_regions_list = [
-        row[0] for row in db.execute(
-            "SELECT DISTINCT region FROM wines WHERE region IS NOT NULL AND region != '' ORDER BY region"
-        ).fetchall()
-    ]
-
     return render_template(
         "stats.html",
         totals=totals,
@@ -902,11 +1061,6 @@ def stats_page():
         wines_by_region=wines_by_region,
         type_translations=type_translations,
         current_year=current_year,
-        wine_types=WINE_TYPES,
-        used_regions_list=used_regions_list,
-        used_locations=used_locations,
-        used_grapes=used_grapes,
-        used_purchased_at=used_purchased_at,
     )
 
 
@@ -1153,7 +1307,20 @@ def analyze_wine():
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
   "notes": "brief tasting notes if visible on label",
-  "bottle_format": number or null
+  "bottle_format": number or null,
+  "maturity_data": {{
+    "youth": [start_year, end_year],
+    "maturity": [start_year, end_year],
+    "peak": [start_year, end_year],
+    "decline": [start_year, end_year]
+  }},
+  "taste_profile": {{
+    "body": 1-5,
+    "tannin": 1-5,
+    "acidity": 1-5,
+    "sweetness": 1-5
+  }},
+  "food_pairings": ["dish1", "dish2", "dish3"]
 }}
 Rules:
 - wine_type MUST be exactly one of the listed values
@@ -1161,8 +1328,11 @@ Rules:
 - drink_from/drink_until: drinking window years. If mentioned on label, use those. Otherwise ESTIMATE a reasonable drinking window based on the wine type, grape variety, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null if not visible
 - bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
+- maturity_data: Estimate the 4 maturity phases (youth, maturity, peak, decline) as year ranges based on wine type, grape, region, and vintage. Youth = early years after bottling, maturity = developing complexity, peak = optimal drinking, decline = past prime. Set to null if vintage is null or unknown.
+- taste_profile: Estimate body (light 1 to full 5), tannin (low 1 to high 5), acidity (low 1 to high 5), sweetness (dry 1 to sweet 5) based on wine type and grape variety. Set to null if wine type is unknown.
+- food_pairings: Suggest 3-5 food pairings based on the wine type and characteristics. Write food names in {lang_name}. Set to null if wine type is unknown.
 - If a field cannot be determined, set it to null or empty string
-- The "notes" field MUST be written in {lang_name}
+- The "notes" and "food_pairings" fields MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""
 
     # Dispatch to the selected provider
@@ -1369,7 +1539,10 @@ def _wine_json_schema():
   "drink_from": year as integer or null,
   "drink_until": year as integer or null,
   "notes": "brief tasting notes",
-  "bottle_format": number or null
+  "bottle_format": number or null,
+  "maturity_data": {"youth": [start_year, end_year], "maturity": [start_year, end_year], "peak": [start_year, end_year], "decline": [start_year, end_year]},
+  "taste_profile": {"body": 1-5, "tannin": 1-5, "acidity": 1-5, "sweetness": 1-5},
+  "food_pairings": ["dish1", "dish2", "dish3"]
 }"""
 
 
@@ -1383,8 +1556,11 @@ def _wine_json_rules(lang="en"):
 - drink_from/drink_until: estimate a reasonable drinking window based on wine type, grape, region, and vintage using your wine expertise. For example, a simple Pinot Grigio 2023 might be 2024-2026, while a Barolo 2018 might be 2025-2035. Only return null if you cannot determine enough about the wine to estimate.
 - price as number without currency symbol, or null
 - bottle_format: volume in liters as number (e.g. 0.75, 1.5, 0.375). Only set if clearly visible on the label. Valid values: 0.1875, 0.375, 0.75, 1.5, 3, 4.5, 6, 9, 12, 15. Return null if not clearly identifiable (do NOT guess).
+- maturity_data: Estimate the 4 maturity phases (youth, maturity, peak, decline) as year ranges based on wine type, grape, region, and vintage. Youth = early years after bottling, maturity = developing complexity, peak = optimal drinking, decline = past prime. Set to null if vintage is null or unknown.
+- taste_profile: Estimate body (light 1 to full 5), tannin (low 1 to high 5), acidity (low 1 to high 5), sweetness (dry 1 to sweet 5) based on wine type and grape variety. Set to null if wine type is unknown.
+- food_pairings: Suggest 3-5 food pairings based on the wine type and characteristics. Write food names in {lang_name}. Set to null if wine type is unknown.
 - If a field cannot be determined, set it to null or empty string
-- The "notes" field MUST be written in {lang_name}
+- The "notes" and "food_pairings" fields MUST be written in {lang_name}
 - Return ONLY the JSON object, no markdown, no explanation"""
 
 
@@ -1477,6 +1653,80 @@ def reanalyze_wine():
 
 
 
+# ── Chat Session API ──────────────────────────────────────────────────────────
+
+@app.route("/api/chat/sessions", methods=["GET", "POST"])
+def api_chat_sessions_list():
+    """List all chat sessions or create a new one."""
+    db = get_db()
+
+    if request.method == "GET":
+        rows = db.execute("""
+            SELECT cs.id, cs.title, cs.created, cs.updated,
+                   COUNT(cm.id) as message_count
+            FROM chat_sessions cs
+            LEFT JOIN chat_messages cm ON cm.session_id = cs.id
+            GROUP BY cs.id
+            ORDER BY cs.updated DESC
+        """).fetchall()
+        sessions = [dict(r) for r in rows]
+        return jsonify(ok=True, sessions=sessions)
+
+    # POST – create new session
+    now = datetime.now().isoformat()
+    cur = db.execute(
+        "INSERT INTO chat_sessions (title, created, updated) VALUES (?, ?, ?)",
+        (None, now, now),
+    )
+    db.commit()
+    session_id = cur.lastrowid
+
+    # Log to timeline
+    db.execute(
+        "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+        (0, "chat", 1, now),
+    )
+    db.commit()
+
+    return jsonify(ok=True, session={
+        "id": session_id,
+        "title": None,
+        "created": now,
+        "updated": now,
+    })
+
+
+@app.route("/api/chat/sessions/<int:session_id>", methods=["GET", "DELETE"])
+def api_chat_session_detail(session_id):
+    """Get or delete a single chat session."""
+    db = get_db()
+
+    if request.method == "GET":
+        sess = db.execute(
+            "SELECT * FROM chat_sessions WHERE id = ?", (session_id,)
+        ).fetchone()
+        if not sess:
+            return jsonify(ok=False, error="not_found"), 404
+        messages = db.execute(
+            "SELECT id, role, content, timestamp FROM chat_messages WHERE session_id = ? ORDER BY id",
+            (session_id,),
+        ).fetchall()
+        return jsonify(ok=True, session=dict(sess), messages=[dict(m) for m in messages])
+
+    # DELETE
+    if AUTH_ENABLED and session.get("role") == "readonly":
+        return jsonify(ok=False, error="readonly"), 403
+    sess = db.execute(
+        "SELECT id FROM chat_sessions WHERE id = ?", (session_id,)
+    ).fetchone()
+    if not sess:
+        return jsonify(ok=False, error="not_found"), 404
+    db.execute("PRAGMA foreign_keys = ON")
+    db.execute("DELETE FROM chat_sessions WHERE id = ?", (session_id,))
+    db.commit()
+    return jsonify(ok=True)
+
+
 # ── AI Wine Chat ──────────────────────────────────────────────────────────────
 
 @app.route("/api/chat", methods=["POST"])
@@ -1490,9 +1740,57 @@ def api_chat():
     body = request.get_json(silent=True) or {}
     user_message = (body.get("message") or "").strip()
     history = body.get("history") or []
+    session_id = body.get("session_id")
+    save = body.get("save", True)
 
     if not user_message:
         return jsonify({"ok": False, "error": "empty_message"}), 400
+
+    db = get_db()
+    now = datetime.now().isoformat()
+
+    if save:
+        # Auto-create session if none provided
+        if not session_id:
+            cur = db.execute(
+                "INSERT INTO chat_sessions (title, created, updated) VALUES (?, ?, ?)",
+                (user_message[:50], now, now),
+            )
+            db.commit()
+            session_id = cur.lastrowid
+            # Log to timeline
+            db.execute(
+                "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+                (0, "chat", 1, now),
+            )
+            db.commit()
+        else:
+            # Verify session exists
+            sess = db.execute("SELECT id, title FROM chat_sessions WHERE id = ?", (session_id,)).fetchone()
+            if not sess:
+                return jsonify({"ok": False, "error": "session_not_found"}), 404
+            # Auto-generate title from first user message if title is empty
+            if not sess["title"]:
+                db.execute(
+                    "UPDATE chat_sessions SET title = ? WHERE id = ?",
+                    (user_message[:50], session_id),
+                )
+
+        # Save user message to DB
+        db.execute(
+            "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+            (session_id, "user", user_message, now),
+        )
+        db.commit()
+
+        # If no history provided, load from DB
+        if not history:
+            db_msgs = db.execute(
+                "SELECT role, content FROM chat_messages WHERE session_id = ? ORDER BY id",
+                (session_id,),
+            ).fetchall()
+            # Exclude the just-inserted user message (it's the last one)
+            history = [{"role": m["role"], "content": m["content"]} for m in db_msgs[:-1]]
 
     # Limit conversation history to prevent token overflow
     history = history[-20:]
@@ -1540,7 +1838,24 @@ def api_chat():
 
     try:
         response_text = _call_chat(provider, messages, system_prompt, opts)
-        return jsonify({"ok": True, "response": response_text})
+
+        if save:
+            # Save assistant response to DB
+            db.execute(
+                "INSERT INTO chat_messages (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
+                (session_id, "assistant", response_text, datetime.now().isoformat()),
+            )
+            # Update session timestamp
+            db.execute(
+                "UPDATE chat_sessions SET updated = ? WHERE id = ?",
+                (datetime.now().isoformat(), session_id),
+            )
+            db.commit()
+
+        result = {"ok": True, "response": response_text}
+        if save and session_id:
+            result["session_id"] = session_id
+        return jsonify(result)
     except Exception as e:
         app.logger.exception("Chat error: %s", e)
         error_msg = str(e)

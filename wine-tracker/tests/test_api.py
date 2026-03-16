@@ -69,6 +69,14 @@ class TestAnalyzeWine:
             "drink_from": 2020,
             "drink_until": 2040,
             "bottle_format": 0.75,
+            "maturity_data": {
+                "youth": [2015, 2020],
+                "maturity": [2021, 2028],
+                "peak": [2029, 2040],
+                "decline": [2041, 2055],
+            },
+            "taste_profile": {"body": 5, "tannin": 5, "acidity": 3, "sweetness": 1},
+            "food_pairings": ["Lamm", "Rindereintopf", "Hartkäse"],
         })
 
         fake_image = (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100), "label.png")
@@ -603,3 +611,431 @@ class TestWineChat:
         system_prompt = call_args[0][2]
         assert "wine:" in system_prompt
         assert "markdown link" in system_prompt.lower() or "[Wine" in system_prompt
+
+
+# ── Chat Sessions API ────────────────────────────────────────────────────────
+
+class TestChatSessions:
+    """Tests for chat session CRUD endpoints."""
+
+    def test_create_session(self, client):
+        """POST /api/chat/sessions should create a new session."""
+        resp = client.post(
+            "/api/chat/sessions",
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert "session" in data
+        assert data["session"]["id"] > 0
+        assert data["session"]["created"]
+        assert data["session"]["updated"]
+
+    def test_list_sessions(self, client):
+        """GET /api/chat/sessions should list all sessions."""
+        # Create two sessions
+        client.post("/api/chat/sessions", content_type="application/json")
+        client.post("/api/chat/sessions", content_type="application/json")
+
+        resp = client.get("/api/chat/sessions")
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert len(data["sessions"]) == 2
+        # Should have message_count field
+        assert "message_count" in data["sessions"][0]
+
+    def test_get_session_with_messages(self, client):
+        """GET /api/chat/sessions/<id> should return session with messages."""
+        # Create a session
+        resp = client.post("/api/chat/sessions", content_type="application/json")
+        session_id = json.loads(resp.data)["session"]["id"]
+
+        resp = client.get(f"/api/chat/sessions/{session_id}")
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert data["session"]["id"] == session_id
+        assert "messages" in data
+        assert isinstance(data["messages"], list)
+
+    def test_get_nonexistent_session(self, client):
+        """GET /api/chat/sessions/<id> should return 404 for nonexistent session."""
+        resp = client.get("/api/chat/sessions/9999")
+        data = json.loads(resp.data)
+        assert resp.status_code == 404
+        assert data["ok"] is False
+
+    def test_delete_session(self, client):
+        """DELETE /api/chat/sessions/<id> should delete session."""
+        # Create a session
+        resp = client.post("/api/chat/sessions", content_type="application/json")
+        session_id = json.loads(resp.data)["session"]["id"]
+
+        # Delete it
+        resp = client.delete(f"/api/chat/sessions/{session_id}")
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+
+        # Verify it's gone
+        resp = client.get(f"/api/chat/sessions/{session_id}")
+        assert resp.status_code == 404
+
+    def test_delete_nonexistent_session(self, client):
+        """DELETE /api/chat/sessions/<id> should return 404 for nonexistent session."""
+        resp = client.delete("/api/chat/sessions/9999")
+        data = json.loads(resp.data)
+        assert resp.status_code == 404
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_with_session_id(self, mock_opts, mock_chat, client):
+        """POST /api/chat with session_id should save messages to DB."""
+        mock_opts.return_value = TestWineChat.CHAT_OPTS
+        mock_chat.return_value = "Great question about wine!"
+
+        # Create a session
+        resp = client.post("/api/chat/sessions", content_type="application/json")
+        session_id = json.loads(resp.data)["session"]["id"]
+
+        # Send a chat message with session_id
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Tell me about Merlot", "session_id": session_id}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert data["session_id"] == session_id
+
+        # Verify messages were saved
+        resp = client.get(f"/api/chat/sessions/{session_id}")
+        data = json.loads(resp.data)
+        assert len(data["messages"]) == 2  # user + assistant
+        assert data["messages"][0]["role"] == "user"
+        assert data["messages"][0]["content"] == "Tell me about Merlot"
+        assert data["messages"][1]["role"] == "assistant"
+        assert data["messages"][1]["content"] == "Great question about wine!"
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_auto_creates_session(self, mock_opts, mock_chat, client):
+        """POST /api/chat without session_id should auto-create a session."""
+        mock_opts.return_value = TestWineChat.CHAT_OPTS
+        mock_chat.return_value = "Here are my recommendations."
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Recommend a red wine"}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert "session_id" in data
+        assert data["session_id"] > 0
+
+        # Verify session was created with title from first message
+        resp = client.get(f"/api/chat/sessions/{data['session_id']}")
+        session_data = json.loads(resp.data)
+        assert session_data["ok"] is True
+        assert session_data["session"]["title"] == "Recommend a red wine"
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_auto_title_from_first_message(self, mock_opts, mock_chat, client):
+        """Session title should be auto-set from first user message (max 50 chars)."""
+        mock_opts.return_value = TestWineChat.CHAT_OPTS
+        mock_chat.return_value = "Sure!"
+
+        # Create session (no title yet)
+        resp = client.post("/api/chat/sessions", content_type="application/json")
+        session_id = json.loads(resp.data)["session"]["id"]
+
+        # Send first message
+        long_msg = "A" * 60  # longer than 50 chars
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": long_msg, "session_id": session_id}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+
+        # Verify title was set (truncated to 50)
+        resp = client.get(f"/api/chat/sessions/{session_id}")
+        session_data = json.loads(resp.data)
+        assert len(session_data["session"]["title"]) == 50
+
+    def test_readonly_cannot_delete_session(self):
+        """Readonly users should not be able to delete chat sessions."""
+        import app as wine_app
+        from werkzeug.security import generate_password_hash
+
+        wine_app.init_db()
+        wine_app.AUTH_ENABLED = True
+        wine_app._USERS = {
+            "viewer": {"hash": generate_password_hash("pass", method="pbkdf2:sha256"), "role": "readonly"},
+        }
+        try:
+            c = wine_app.app.test_client()
+            # Login
+            c.post("/login", data={"username": "viewer", "password": "pass"})
+            # Create a session (should be allowed)
+            resp = c.post("/api/chat/sessions", content_type="application/json")
+            data = json.loads(resp.data)
+            assert data["ok"] is True
+            session_id = data["session"]["id"]
+            # Try to delete (should be blocked)
+            resp = c.delete(f"/api/chat/sessions/{session_id}")
+            data = json.loads(resp.data)
+            assert resp.status_code == 403
+            assert data["error"] == "readonly"
+        finally:
+            wine_app.AUTH_ENABLED = False
+            wine_app._USERS = {}
+
+    def test_session_creates_timeline_entry(self, client):
+        """Creating a new chat session should log to timeline."""
+        resp = client.post("/api/chat/sessions", content_type="application/json")
+        assert json.loads(resp.data)["ok"] is True
+
+        # Check timeline
+        resp = client.get("/api/timeline")
+        data = json.loads(resp.data)
+        chat_entries = [e for e in data["entries"] if e["action"] == "chat"]
+        assert len(chat_entries) >= 1
+        assert chat_entries[0]["wine_id"] == 0
+
+
+# ── Chat Recording Toggle (save=false) ───────────────────────────────────────
+
+class TestChatRecordingToggle:
+    """Tests for the chat recording toggle (save flag)."""
+
+    CHAT_OPTS = {
+        "ai_provider": "anthropic",
+        "anthropic_api_key": "test-key",
+        "anthropic_model": "claude-3",
+        "currency": "CHF",
+        "language": "de",
+        "openai_api_key": "",
+        "openai_model": "gpt-4o",
+        "openrouter_api_key": "",
+        "openrouter_model": "anthropic/claude-opus-4.6",
+        "ollama_host": "http://localhost:11434",
+        "ollama_model": "llava",
+    }
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_save_false_no_session_created(self, mock_opts, mock_chat, client):
+        """POST /api/chat with save=false should NOT create session or messages."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = "Here is my answer."
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Tell me about Pinot Noir", "save": False}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert data["response"] == "Here is my answer."
+        assert "session_id" not in data
+
+        # Verify no sessions were created
+        resp = client.get("/api/chat/sessions")
+        sessions = json.loads(resp.data)["sessions"]
+        assert len(sessions) == 0
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_save_default_creates_session(self, mock_opts, mock_chat, client):
+        """POST /api/chat without save flag (default True) should save to DB."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = "Great wine choice!"
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "What about Merlot?"}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert "session_id" in data
+        assert data["session_id"] > 0
+
+        # Verify messages were saved
+        resp = client.get(f"/api/chat/sessions/{data['session_id']}")
+        session_data = json.loads(resp.data)
+        assert len(session_data["messages"]) == 2  # user + assistant
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_save_false_no_timeline_entry(self, mock_opts, mock_chat, client):
+        """POST /api/chat with save=false should NOT create timeline entry."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = "Response text."
+
+        client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Quick question", "save": False}),
+            content_type="application/json",
+        )
+
+        # Verify no chat timeline entries
+        resp = client.get("/api/timeline")
+        data = json.loads(resp.data)
+        chat_entries = [e for e in data["entries"] if e["action"] == "chat"]
+        assert len(chat_entries) == 0
+
+
+# ── Maturity / Taste / Food Pairings ─────────────────────────────────────────
+
+class TestMaturityTasteFood:
+    """Tests for AI maturity_data, taste_profile, and food_pairings fields."""
+
+    @patch("app._call_anthropic")
+    @patch("app.load_options")
+    def test_ai_returns_maturity_taste_food(self, mock_opts, mock_call, client):
+        """AI analysis should return maturity_data, taste_profile, food_pairings."""
+        mock_opts.return_value = {
+            **wine_app.HA_OPTIONS,
+            "ai_provider": "anthropic",
+            "anthropic_api_key": "sk-test",
+        }
+        mock_call.return_value = json.dumps({
+            "name": "Barolo Riserva",
+            "wine_type": "Rotwein",
+            "vintage": 2016,
+            "region": "Piemont, IT",
+            "grape": "Nebbiolo",
+            "price": None,
+            "notes": "Complex",
+            "drink_from": 2026,
+            "drink_until": 2046,
+            "bottle_format": 0.75,
+            "maturity_data": {
+                "youth": [2016, 2023],
+                "maturity": [2024, 2030],
+                "peak": [2031, 2042],
+                "decline": [2043, 2055],
+            },
+            "taste_profile": {"body": 5, "tannin": 5, "acidity": 4, "sweetness": 1},
+            "food_pairings": ["Lamm", "Trüffel", "Hartkäse"],
+        })
+
+        fake_image = (io.BytesIO(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100), "label.png")
+        resp = client.post(
+            "/api/analyze-wine",
+            data={"image": fake_image},
+            content_type="multipart/form-data",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert "maturity_data" in data["fields"]
+        assert data["fields"]["maturity_data"]["peak"] == [2031, 2042]
+        assert "taste_profile" in data["fields"]
+        assert data["fields"]["taste_profile"]["body"] == 5
+        assert "food_pairings" in data["fields"]
+        assert "Lamm" in data["fields"]["food_pairings"]
+
+    def test_add_wine_with_maturity_data(self, client):
+        """Adding a wine with maturity/taste/food data should save to DB."""
+        maturity = json.dumps({"youth": [2020, 2024], "maturity": [2025, 2030],
+                               "peak": [2031, 2040], "decline": [2041, 2050]})
+        taste = json.dumps({"body": 4, "tannin": 3, "acidity": 3, "sweetness": 1})
+        food = json.dumps(["Steak", "Risotto"])
+
+        resp = client.post(
+            "/add",
+            data={
+                "name": "Test Maturity Wine",
+                "year": "2020",
+                "type": "Rotwein",
+                "region": "Toskana, IT",
+                "quantity": "2",
+                "rating": "4",
+                "notes": "",
+                "purchased_at": "",
+                "price": "",
+                "drink_from": "2025",
+                "drink_until": "2040",
+                "location": "",
+                "grape": "Sangiovese",
+                "bottle_format": "0.75",
+                "maturity_data": maturity,
+                "taste_profile": taste,
+                "food_pairings": food,
+            },
+            headers=AJAX,
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        wine_id = data["wine"]["id"]
+
+        # Fetch via API and verify parsed JSON
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        w = data["wine"]
+        assert w["maturity_data"]["peak"] == [2031, 2040]
+        assert w["taste_profile"]["body"] == 4
+        assert "Steak" in w["food_pairings"]
+
+    def test_api_wine_without_maturity_returns_null(self, client, sample_wine):
+        """Wine without maturity data should return null for new fields."""
+        wine_id = sample_wine["wine"]["id"]
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data["wine"]["maturity_data"] is None
+        assert data["wine"]["taste_profile"] is None
+        assert data["wine"]["food_pairings"] is None
+
+    def test_edit_wine_saves_maturity_data(self, client, sample_wine):
+        """Editing a wine should save maturity/taste/food data."""
+        wine_id = sample_wine["wine"]["id"]
+        maturity = json.dumps({"youth": [2020, 2022], "maturity": [2023, 2027],
+                               "peak": [2028, 2035], "decline": [2036, 2045]})
+        taste = json.dumps({"body": 3, "tannin": 2, "acidity": 4, "sweetness": 2})
+        food = json.dumps(["Fish", "Salad"])
+
+        resp = client.post(
+            f"/edit/{wine_id}",
+            data={
+                "name": "Ch\u00e2teau Test",
+                "year": "2020",
+                "type": "Rotwein",
+                "region": "Bordeaux, FR",
+                "quantity": "3",
+                "rating": "4",
+                "notes": "Excellent test wine",
+                "purchased_at": "Testshop",
+                "price": "29.90",
+                "drink_from": "2023",
+                "drink_until": "2030",
+                "location": "Keller A",
+                "grape": "Merlot",
+                "bottle_format": "0.75",
+                "maturity_data": maturity,
+                "taste_profile": taste,
+                "food_pairings": food,
+            },
+            headers=AJAX,
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+
+        # Verify
+        resp = client.get(f"/api/wine/{wine_id}")
+        data = json.loads(resp.data)
+        assert data["wine"]["maturity_data"]["peak"] == [2028, 2035]
+        assert data["wine"]["taste_profile"]["acidity"] == 4
+        assert "Fish" in data["wine"]["food_pairings"]

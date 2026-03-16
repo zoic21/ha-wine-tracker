@@ -101,6 +101,17 @@ document.addEventListener('click', function(e) {
   if (dd && !dd.contains(e.target)) dd.classList.remove('open');
 });
 
+// ── Chat recording toggle ────────────────────────────────────────────────────
+function toggleChatRecording(enabled) {
+  localStorage.setItem('chatRecording', enabled ? '1' : '0');
+  if (typeof _updateChatHistoryButtons === 'function') _updateChatHistoryButtons();
+}
+
+function initChatRecordingToggle() {
+  var el = document.getElementById('chatRecordingToggle');
+  if (el) el.checked = localStorage.getItem('chatRecording') !== '0'; // default ON
+}
+
 // Apply theme name on load (mode is handled by inline script + OS listener)
 (function() {
   var name = localStorage.getItem('wine-theme-name') || 'homeassistant';

@@ -26,6 +26,8 @@ TRANSLATIONS = {
     "theme_system": "System",
     "theme_dark": "Dunkel",
     "theme_light": "Hell",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Chatverlauf speichern",
     "settings_about": "Über",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -53,7 +55,7 @@ TRANSLATIONS = {
 
     # Wine form
     "modal_add_title": "Wein hinzufügen",
-    "modal_edit_title": "Wein bearbeiten",
+    "modal_edit_title": "Bearbeiten",
     "label_photo": "Foto (Etikett)",
     "label_name": "Name *",
     "placeholder_name": "z.B. Barolo Riserva",
@@ -96,15 +98,20 @@ TRANSLATIONS = {
     "btn_duplicate": "Duplizieren",
     "btn_delete": "Löschen",
 
+    # View modal
+    "modal_view_title": "Detail",
+    "btn_close": "Schliessen",
+    "view_drink_window": "Trinkfenster",
+
     # Delete modal
-    "delete_title": "Wein löschen",
+    "delete_title": "Löschen",
     "delete_really": "wirklich löschen?",
     "btn_cancel": "Abbrechen",
     "btn_logout": "Abmelden",
     "btn_confirm_delete": "Löschen",
 
     # Duplicate modal
-    "dup_title": "Wein duplizieren",
+    "dup_title": "Duplizieren",
     "dup_template": "Vorlage",
     "dup_new_vintage": "Neuer Jahrgang",
     "dup_qty": "Anzahl Flaschen",
@@ -135,6 +142,13 @@ TRANSLATIONS = {
     "chat_send": "Senden",
     "chat_error": "Fehler bei der Antwort. Bitte nochmal versuchen.",
     "chat_empty_cellar": "Dein Weinkeller ist noch leer. Füge zuerst Weine hinzu!",
+    "chat_new": "Neuer Chat",
+    "chat_history": "Verlauf",
+    "chat_delete": "Chat löschen",
+    "chat_delete_confirm": "Chat wirklich löschen?",
+    "chat_no_sessions": "Noch keine Gespräche",
+    "chat_message": "Nachricht",
+    "chat_messages": "Nachrichten",
 
     # Vivino search
     "source_step_title": "Wein erfassen",
@@ -200,6 +214,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Herkunft Deiner Weine",
     "stat_no_data": "Noch keine Daten vorhanden.",
     "stat_add_wines_first": "Füge zuerst Weine hinzu!",
+
+    # Timeline
+    "timeline": "Zeitverlauf",
+    "timeline_consumed_month": "Diesen Monat getrunken",
+    "timeline_added_month": "Diesen Monat hinzugefügt",
+    "timeline_restocked_month": "Diesen Monat nachgefüllt",
+    "timeline_total_events": "Aktivitäten",
+    "timeline_no_entries": "Noch keine Einträge vorhanden.",
+    "log_added": "hinzugefügt",
+    "log_consumed": "getrunken",
+    "log_restocked": "nachgefüllt",
+    "log_removed": "entfernt",
+    "log_chat": "Sommelier-Gespräch",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Reifephasen",
+    "maturity_youth": "Jugend",
+    "maturity_maturity": "Reife",
+    "maturity_peak": "H\u00f6hepunkt",
+    "maturity_decline": "Niedergang",
+    "maturity_today": "Heute",
+    "maturity_excellent": "Exzellent",
+    "maturity_good": "Gut",
+    "maturity_poor": "Schlecht",
+    "taste_profile": "Geschmacksprofil",
+    "taste_body": "K\u00f6rper",
+    "taste_tannin": "Tannin",
+    "taste_acidity": "S\u00e4ure",
+    "taste_sweetness": "S\u00fc\u00dfe",
+    "food_pairings": "Passt zu",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -223,6 +267,8 @@ TRANSLATIONS = {
     "theme_system": "System",
     "theme_dark": "Dark",
     "theme_light": "Light",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Save chat history",
     "settings_about": "About",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -247,7 +293,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Add wine",
 
     "modal_add_title": "Add wine",
-    "modal_edit_title": "Edit wine",
+    "modal_edit_title": "Edit",
     "label_photo": "Photo (label)",
     "label_name": "Name *",
     "placeholder_name": "e.g. Barolo Riserva",
@@ -288,13 +334,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Duplicate",
     "btn_delete": "Delete",
 
-    "delete_title": "Delete wine",
+    # View modal
+    "modal_view_title": "Detail",
+    "btn_close": "Close",
+    "view_drink_window": "Drink window",
+
+    "delete_title": "Delete",
     "delete_really": "really delete?",
     "btn_cancel": "Cancel",
     "btn_logout": "Sign out",
     "btn_confirm_delete": "Delete",
 
-    "dup_title": "Duplicate wine",
+    "dup_title": "Duplicate",
     "dup_template": "Template",
     "dup_new_vintage": "New vintage",
     "dup_qty": "Quantity",
@@ -324,6 +375,13 @@ TRANSLATIONS = {
     "chat_send": "Send",
     "chat_error": "Error getting response. Please try again.",
     "chat_empty_cellar": "Your cellar is empty. Add some wines first!",
+    "chat_new": "New chat",
+    "chat_history": "History",
+    "chat_delete": "Delete chat",
+    "chat_delete_confirm": "Really delete this chat?",
+    "chat_no_sessions": "No conversations yet",
+    "chat_message": "message",
+    "chat_messages": "messages",
 
     # Vivino search
     "source_step_title": "Add wine",
@@ -386,6 +444,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Origin of your wines",
     "stat_no_data": "No data available yet.",
     "stat_add_wines_first": "Add some wines first!",
+
+    # Timeline
+    "timeline": "Timeline",
+    "timeline_consumed_month": "Consumed this month",
+    "timeline_added_month": "Added this month",
+    "timeline_restocked_month": "Restocked this month",
+    "timeline_total_events": "Activities",
+    "timeline_no_entries": "No entries yet.",
+    "log_added": "added",
+    "log_consumed": "consumed",
+    "log_restocked": "restocked",
+    "log_removed": "removed",
+    "log_chat": "Sommelier chat",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Maturity Phases",
+    "maturity_youth": "Youth",
+    "maturity_maturity": "Maturity",
+    "maturity_peak": "Peak",
+    "maturity_decline": "Decline",
+    "maturity_today": "Today",
+    "maturity_excellent": "Excellent",
+    "maturity_good": "Good",
+    "maturity_poor": "Poor",
+    "taste_profile": "Taste Profile",
+    "taste_body": "Body",
+    "taste_tannin": "Tannin",
+    "taste_acidity": "Acidity",
+    "taste_sweetness": "Sweetness",
+    "food_pairings": "Food Pairings",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -409,6 +497,8 @@ TRANSLATIONS = {
     "theme_system": "Système",
     "theme_dark": "Sombre",
     "theme_light": "Clair",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Enregistrer l'historique",
     "settings_about": "À propos",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -433,7 +523,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Ajouter un vin",
 
     "modal_add_title": "Ajouter un vin",
-    "modal_edit_title": "Modifier le vin",
+    "modal_edit_title": "Modifier",
     "label_photo": "Photo (étiquette)",
     "label_name": "Nom *",
     "placeholder_name": "p.ex. Barolo Riserva",
@@ -474,13 +564,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Dupliquer",
     "btn_delete": "Supprimer",
 
-    "delete_title": "Supprimer le vin",
+    # View modal
+    "modal_view_title": "Détail",
+    "btn_close": "Fermer",
+    "view_drink_window": "Fenêtre de dégustation",
+
+    "delete_title": "Supprimer",
     "delete_really": "vraiment supprimer ?",
     "btn_cancel": "Annuler",
     "btn_logout": "Déconnexion",
     "btn_confirm_delete": "Supprimer",
 
-    "dup_title": "Dupliquer le vin",
+    "dup_title": "Dupliquer",
     "dup_template": "Modèle",
     "dup_new_vintage": "Nouveau millésime",
     "dup_qty": "Quantité",
@@ -510,6 +605,13 @@ TRANSLATIONS = {
     "chat_send": "Envoyer",
     "chat_error": "Erreur lors de la réponse. Veuillez réessayer.",
     "chat_empty_cellar": "Votre cave est vide. Ajoutez d'abord des vins\u00a0!",
+    "chat_new": "Nouveau chat",
+    "chat_history": "Historique",
+    "chat_delete": "Supprimer le chat",
+    "chat_delete_confirm": "Vraiment supprimer ce chat\u00a0?",
+    "chat_no_sessions": "Aucune conversation",
+    "chat_message": "message",
+    "chat_messages": "messages",
 
     # Vivino search
     "source_step_title": "Ajouter un vin",
@@ -572,6 +674,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Origine de vos vins",
     "stat_no_data": "Aucune donnée disponible.",
     "stat_add_wines_first": "Ajoutez d'abord des vins !",
+
+    # Timeline
+    "timeline": "Chronologie",
+    "timeline_consumed_month": "Bu ce mois-ci",
+    "timeline_added_month": "Ajouté ce mois-ci",
+    "timeline_restocked_month": "Réapprovisionné ce mois-ci",
+    "timeline_total_events": "Activités",
+    "timeline_no_entries": "Aucune entrée pour le moment.",
+    "log_added": "ajouté",
+    "log_consumed": "bu",
+    "log_restocked": "réapprovisionné",
+    "log_removed": "supprimé",
+    "log_chat": "Discussion sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Phases de maturit\u00e9",
+    "maturity_youth": "Jeunesse",
+    "maturity_maturity": "Maturit\u00e9",
+    "maturity_peak": "Apog\u00e9e",
+    "maturity_decline": "D\u00e9clin",
+    "maturity_today": "Aujourd'hui",
+    "maturity_excellent": "Excellent",
+    "maturity_good": "Bon",
+    "maturity_poor": "Mauvais",
+    "taste_profile": "Profil gustatif",
+    "taste_body": "Corps",
+    "taste_tannin": "Tanin",
+    "taste_acidity": "Acidit\u00e9",
+    "taste_sweetness": "Sucrosit\u00e9",
+    "food_pairings": "Accords mets",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -595,6 +727,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Scuro",
     "theme_light": "Chiaro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Salva cronologia chat",
     "settings_about": "Info",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -619,7 +753,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Aggiungi vino",
 
     "modal_add_title": "Aggiungi vino",
-    "modal_edit_title": "Modifica vino",
+    "modal_edit_title": "Modifica",
     "label_photo": "Foto (etichetta)",
     "label_name": "Nome *",
     "placeholder_name": "es. Barolo Riserva",
@@ -660,13 +794,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Duplica",
     "btn_delete": "Elimina",
 
-    "delete_title": "Elimina vino",
+    # View modal
+    "modal_view_title": "Dettaglio",
+    "btn_close": "Chiudi",
+    "view_drink_window": "Finestra di beva",
+
+    "delete_title": "Elimina",
     "delete_really": "eliminare davvero?",
     "btn_cancel": "Annulla",
     "btn_logout": "Disconnetti",
     "btn_confirm_delete": "Elimina",
 
-    "dup_title": "Duplica vino",
+    "dup_title": "Duplica",
     "dup_template": "Modello",
     "dup_new_vintage": "Nuova annata",
     "dup_qty": "Quantità",
@@ -696,6 +835,13 @@ TRANSLATIONS = {
     "chat_send": "Invia",
     "chat_error": "Errore nella risposta. Riprova.",
     "chat_empty_cellar": "La tua cantina è vuota. Aggiungi prima dei vini!",
+    "chat_new": "Nuova chat",
+    "chat_history": "Cronologia",
+    "chat_delete": "Elimina chat",
+    "chat_delete_confirm": "Eliminare davvero questa chat?",
+    "chat_no_sessions": "Nessuna conversazione",
+    "chat_message": "messaggio",
+    "chat_messages": "messaggi",
 
     # Vivino search
     "source_step_title": "Aggiungi vino",
@@ -758,6 +904,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Origine dei tuoi vini",
     "stat_no_data": "Nessun dato disponibile.",
     "stat_add_wines_first": "Aggiungi prima dei vini!",
+
+    # Timeline
+    "timeline": "Cronologia",
+    "timeline_consumed_month": "Bevuti questo mese",
+    "timeline_added_month": "Aggiunti questo mese",
+    "timeline_restocked_month": "Riforniti questo mese",
+    "timeline_total_events": "Attività",
+    "timeline_no_entries": "Nessuna voce ancora.",
+    "log_added": "aggiunto",
+    "log_consumed": "bevuto",
+    "log_restocked": "rifornito",
+    "log_removed": "rimosso",
+    "log_chat": "Conversazione sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fasi di maturazione",
+    "maturity_youth": "Giovinezza",
+    "maturity_maturity": "Maturit\u00e0",
+    "maturity_peak": "Apice",
+    "maturity_decline": "Declino",
+    "maturity_today": "Oggi",
+    "maturity_excellent": "Eccellente",
+    "maturity_good": "Buono",
+    "maturity_poor": "Scarso",
+    "taste_profile": "Profilo gustativo",
+    "taste_body": "Corpo",
+    "taste_tannin": "Tannino",
+    "taste_acidity": "Acidit\u00e0",
+    "taste_sweetness": "Dolcezza",
+    "food_pairings": "Abbinamenti",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -781,6 +957,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Oscuro",
     "theme_light": "Claro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Guardar historial de chat",
     "settings_about": "Acerca de",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -805,7 +983,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Añadir vino",
 
     "modal_add_title": "Añadir vino",
-    "modal_edit_title": "Editar vino",
+    "modal_edit_title": "Editar",
     "label_photo": "Foto (etiqueta)",
     "label_name": "Nombre *",
     "placeholder_name": "ej. Barolo Riserva",
@@ -846,13 +1024,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Duplicar",
     "btn_delete": "Eliminar",
 
-    "delete_title": "Eliminar vino",
+    # View modal
+    "modal_view_title": "Detalle",
+    "btn_close": "Cerrar",
+    "view_drink_window": "Ventana de consumo",
+
+    "delete_title": "Eliminar",
     "delete_really": "¿eliminar realmente?",
     "btn_cancel": "Cancelar",
     "btn_logout": "Cerrar sesión",
     "btn_confirm_delete": "Eliminar",
 
-    "dup_title": "Duplicar vino",
+    "dup_title": "Duplicar",
     "dup_template": "Plantilla",
     "dup_new_vintage": "Nueva añada",
     "dup_qty": "Cantidad",
@@ -882,6 +1065,13 @@ TRANSLATIONS = {
     "chat_send": "Enviar",
     "chat_error": "Error en la respuesta. Inténtalo de nuevo.",
     "chat_empty_cellar": "Tu bodega está vacía. ¡Añade vinos primero!",
+    "chat_new": "Nuevo chat",
+    "chat_history": "Historial",
+    "chat_delete": "Eliminar chat",
+    "chat_delete_confirm": "¿Realmente eliminar este chat?",
+    "chat_no_sessions": "Aún no hay conversaciones",
+    "chat_message": "mensaje",
+    "chat_messages": "mensajes",
 
     # Vivino search
     "source_step_title": "Añadir vino",
@@ -944,6 +1134,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Origen de tus vinos",
     "stat_no_data": "No hay datos disponibles.",
     "stat_add_wines_first": "¡Añade primero algunos vinos!",
+
+    # Timeline
+    "timeline": "Cronología",
+    "timeline_consumed_month": "Bebidos este mes",
+    "timeline_added_month": "Añadidos este mes",
+    "timeline_restocked_month": "Reabastecidos este mes",
+    "timeline_total_events": "Actividades",
+    "timeline_no_entries": "Aún no hay entradas.",
+    "log_added": "añadido",
+    "log_consumed": "bebido",
+    "log_restocked": "repuesto",
+    "log_removed": "eliminado",
+    "log_chat": "Conversaci\u00f3n sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fases de madurez",
+    "maturity_youth": "Juventud",
+    "maturity_maturity": "Madurez",
+    "maturity_peak": "Apogeo",
+    "maturity_decline": "Declive",
+    "maturity_today": "Hoy",
+    "maturity_excellent": "Excelente",
+    "maturity_good": "Bueno",
+    "maturity_poor": "Malo",
+    "taste_profile": "Perfil de sabor",
+    "taste_body": "Cuerpo",
+    "taste_tannin": "Tanino",
+    "taste_acidity": "Acidez",
+    "taste_sweetness": "Dulzura",
+    "food_pairings": "Maridaje",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -967,6 +1187,8 @@ TRANSLATIONS = {
     "theme_system": "Sistema",
     "theme_dark": "Escuro",
     "theme_light": "Claro",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Salvar histórico de chat",
     "settings_about": "Sobre",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -991,7 +1213,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Adicionar vinho",
 
     "modal_add_title": "Adicionar vinho",
-    "modal_edit_title": "Editar vinho",
+    "modal_edit_title": "Editar",
     "label_photo": "Foto (rótulo)",
     "label_name": "Nome *",
     "placeholder_name": "ex. Barolo Riserva",
@@ -1032,13 +1254,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Duplicar",
     "btn_delete": "Excluir",
 
-    "delete_title": "Excluir vinho",
+    # View modal
+    "modal_view_title": "Detalhe",
+    "btn_close": "Fechar",
+    "view_drink_window": "Janela de consumo",
+
+    "delete_title": "Excluir",
     "delete_really": "realmente excluir?",
     "btn_cancel": "Cancelar",
     "btn_logout": "Sair",
     "btn_confirm_delete": "Excluir",
 
-    "dup_title": "Duplicar vinho",
+    "dup_title": "Duplicar",
     "dup_template": "Modelo",
     "dup_new_vintage": "Nova safra",
     "dup_qty": "Quantidade",
@@ -1068,6 +1295,13 @@ TRANSLATIONS = {
     "chat_send": "Enviar",
     "chat_error": "Erro na resposta. Tente novamente.",
     "chat_empty_cellar": "Sua adega está vazia. Adicione vinhos primeiro!",
+    "chat_new": "Novo chat",
+    "chat_history": "Histórico",
+    "chat_delete": "Excluir chat",
+    "chat_delete_confirm": "Realmente excluir este chat?",
+    "chat_no_sessions": "Nenhuma conversa ainda",
+    "chat_message": "mensagem",
+    "chat_messages": "mensagens",
 
     # Vivino search
     "source_step_title": "Adicionar vinho",
@@ -1130,6 +1364,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Origem dos seus vinhos",
     "stat_no_data": "Nenhum dado disponível.",
     "stat_add_wines_first": "Adicione alguns vinhos primeiro!",
+
+    # Timeline
+    "timeline": "Cronologia",
+    "timeline_consumed_month": "Bebidos este mês",
+    "timeline_added_month": "Adicionados este mês",
+    "timeline_restocked_month": "Reabastecidos este mês",
+    "timeline_total_events": "Atividades",
+    "timeline_no_entries": "Ainda sem entradas.",
+    "log_added": "adicionado",
+    "log_consumed": "bebido",
+    "log_restocked": "reabastecido",
+    "log_removed": "removido",
+    "log_chat": "Conversa sommelier",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Fases de matura\u00e7\u00e3o",
+    "maturity_youth": "Juventude",
+    "maturity_maturity": "Maturidade",
+    "maturity_peak": "Apogeu",
+    "maturity_decline": "Decl\u00ednio",
+    "maturity_today": "Hoje",
+    "maturity_excellent": "Excelente",
+    "maturity_good": "Bom",
+    "maturity_poor": "Mau",
+    "taste_profile": "Perfil de sabor",
+    "taste_body": "Corpo",
+    "taste_tannin": "Tanino",
+    "taste_acidity": "Acidez",
+    "taste_sweetness": "Do\u00e7ura",
+    "food_pairings": "Harmoniza\u00e7\u00e3o",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1153,6 +1417,8 @@ TRANSLATIONS = {
     "theme_system": "Systeem",
     "theme_dark": "Donker",
     "theme_light": "Licht",
+    "settings_chat": "Sommelier",
+    "settings_chat_recording": "Chatgeschiedenis opslaan",
     "settings_about": "Over",
     "about_version": "Version",
     "about_github": "GitHub Repository",
@@ -1177,7 +1443,7 @@ TRANSLATIONS = {
     "btn_add_wine": "+ Wijn toevoegen",
 
     "modal_add_title": "Wijn toevoegen",
-    "modal_edit_title": "Wijn bewerken",
+    "modal_edit_title": "Bewerken",
     "label_photo": "Foto (etiket)",
     "label_name": "Naam *",
     "placeholder_name": "bijv. Barolo Riserva",
@@ -1218,13 +1484,18 @@ TRANSLATIONS = {
     "btn_duplicate": "Dupliceren",
     "btn_delete": "Verwijderen",
 
-    "delete_title": "Wijn verwijderen",
+    # View modal
+    "modal_view_title": "Detail",
+    "btn_close": "Sluiten",
+    "view_drink_window": "Drinkvenster",
+
+    "delete_title": "Verwijderen",
     "delete_really": "echt verwijderen?",
     "btn_cancel": "Annuleren",
     "btn_logout": "Afmelden",
     "btn_confirm_delete": "Verwijderen",
 
-    "dup_title": "Wijn dupliceren",
+    "dup_title": "Dupliceren",
     "dup_template": "Sjabloon",
     "dup_new_vintage": "Nieuwe jaargang",
     "dup_qty": "Aantal",
@@ -1254,6 +1525,13 @@ TRANSLATIONS = {
     "chat_send": "Verzenden",
     "chat_error": "Fout bij antwoord. Probeer opnieuw.",
     "chat_empty_cellar": "Je wijnkelder is leeg. Voeg eerst wijnen toe!",
+    "chat_new": "Nieuw gesprek",
+    "chat_history": "Geschiedenis",
+    "chat_delete": "Chat verwijderen",
+    "chat_delete_confirm": "Chat echt verwijderen?",
+    "chat_no_sessions": "Nog geen gesprekken",
+    "chat_message": "bericht",
+    "chat_messages": "berichten",
 
     # Vivino search
     "source_step_title": "Wijn toevoegen",
@@ -1316,6 +1594,36 @@ TRANSLATIONS = {
     "stat_wine_origin": "Herkomst van je wijnen",
     "stat_no_data": "Nog geen gegevens beschikbaar.",
     "stat_add_wines_first": "Voeg eerst wijnen toe!",
+
+    # Timeline
+    "timeline": "Tijdlijn",
+    "timeline_consumed_month": "Gedronken deze maand",
+    "timeline_added_month": "Toegevoegd deze maand",
+    "timeline_restocked_month": "Aangevuld deze maand",
+    "timeline_total_events": "Activiteiten",
+    "timeline_no_entries": "Nog geen vermeldingen.",
+    "log_added": "toegevoegd",
+    "log_consumed": "gedronken",
+    "log_restocked": "bijgevuld",
+    "log_removed": "verwijderd",
+    "log_chat": "Sommelier gesprek",
+
+    # Maturity / Taste / Food Pairings
+    "maturity_phases": "Rijpingsfasen",
+    "maturity_youth": "Jeugd",
+    "maturity_maturity": "Rijpheid",
+    "maturity_peak": "Hoogtepunt",
+    "maturity_decline": "Verval",
+    "maturity_today": "Vandaag",
+    "maturity_excellent": "Uitstekend",
+    "maturity_good": "Goed",
+    "maturity_poor": "Slecht",
+    "taste_profile": "Smaakprofiel",
+    "taste_body": "Body",
+    "taste_tannin": "Tannine",
+    "taste_acidity": "Zuurgraad",
+    "taste_sweetness": "Zoetheid",
+    "food_pairings": "Past bij",
 },
 
 }  # end TRANSLATIONS
