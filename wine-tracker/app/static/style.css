@@ -447,6 +447,234 @@ html.light .filter-option:hover { background: rgba(0,0,0,.05); }
 .card-vivino-link:hover { color: var(--accent); }
 .card-vivino-link img { width: 14px; height: 14px; opacity: .6; }
 
+/* ── View Mode Radio Buttons (Settings Modal) ──────────────────────────────── */
+.view-mode-radios {
+  display: flex; flex-direction: column; gap: .4rem;
+}
+.view-mode-radio {
+  display: flex; align-items: center; gap: .5rem;
+  cursor: pointer; font-size: .85rem; color: var(--text);
+}
+.view-mode-radio input[type="radio"] {
+  accent-color: var(--accent); width: 16px; height: 16px; margin: 0; cursor: pointer;
+}
+.view-mode-radio span {
+  display: flex; align-items: center; gap: .35rem;
+}
+.view-mode-radio .mdi { font-size: 1rem; opacity: .7; }
+
+/* ── View Mode: List ──────────────────────────────────────────────────────── */
+.grid.view-list {
+  grid-template-columns: 1fr;
+  gap: .5rem;
+}
+.view-list .card {
+  flex-direction: row;
+  align-items: center;
+  overflow: hidden;
+}
+.view-list .card-img {
+  width: 48px; height: 48px; min-width: 48px;
+  border-radius: 6px; margin: .5rem; margin-right: 0;
+  font-size: 1.5rem;
+}
+.view-list .card-img .mdi { font-size: 1.3rem; }
+.view-list .card-body {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  padding: .5rem .75rem .5rem 0; padding-right: 35%; min-width: 0;
+  position: relative;
+}
+.view-list .card-name {
+  font-size: .9rem; margin-bottom: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.view-list .card-meta {
+  display: flex; gap: .35rem; margin: .15rem 0 0 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex-wrap: nowrap;
+}
+.view-list .card-meta span {
+  background: none; padding: 0;
+  font-size: .75rem; color: var(--muted);
+  white-space: nowrap;
+}
+.view-list .card-meta span:nth-child(2) {
+  overflow: hidden; text-overflow: ellipsis;
+}
+.view-list .card-meta span:empty { display: none; }
+.view-list .card-meta span:first-child:not(:empty)::after {
+  content: "·"; margin-left: .35rem;
+}
+.view-list .card-extra {
+  position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+  margin: 0; display: flex; flex-direction: column; align-items: flex-end;
+  gap: .15rem;
+  max-width: 33%; min-width: 0;
+}
+.view-list .card-extra span:has(.mdi-fruit-grapes) { order: -1; }
+.view-list .card-extra span,
+.view-list .card-extra a {
+  white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.view-list .card-extra .price { display: none; }
+.view-list .card-extra .card-vivino-link { display: none; }
+.view-list .card-extra span:has(.mdi-map-marker) { display: none; }
+.view-list .card-notes { display: none; }
+.view-list .stars { display: none; }
+.view-list .qty-badge {
+  position: static; margin: 0 .5rem;
+  background: none; border: none; backdrop-filter: none;
+  padding: 0; font-size: .8rem;
+}
+.view-list .ribbon {
+  position: absolute; top: 2px; left: -10px;
+  width: 40px; height: 9px;
+  transform: rotate(-45deg); transform-origin: center;
+  padding: 0; font-size: 0; color: transparent;
+  border-radius: 0; text-align: center;
+  overflow: hidden; text-indent: -9999px;
+  box-shadow: none;
+}
+.view-list .card-actions { display: none; }
+.view-list .card:hover { transform: none; }
+
+/* ── View Mode: Grid ──────────────────────────────────────────────────────── */
+.grid.view-grid {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: .5rem;
+}
+.view-grid .card { overflow: hidden; }
+.view-grid .card-img {
+  width: 100%; height: 0; padding-bottom: 100%;
+  position: relative;
+}
+.view-grid .card-img img {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover;
+}
+.view-grid .card-img .mdi {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%); font-size: 2.5rem;
+}
+.view-grid .card-body {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,.75));
+  padding: .5rem .6rem .4rem; color: #fff;
+}
+.view-grid .card { position: relative; }
+.view-grid .card-name {
+  font-size: .8rem; color: #fff; margin-bottom: 0;
+}
+.view-grid .card-meta { display: none; }
+.view-grid .card-extra { display: none; }
+.view-grid .card-notes { display: none; }
+.view-grid .stars { display: none; }
+.view-grid .qty-badge {
+  font-size: .7rem; padding: .1rem .4rem;
+  top: .4rem; right: .4rem;
+}
+.view-grid .ribbon {
+  top: 12px; left: -38px; font-size: .55rem;
+  width: 120px; padding: 2px 0;
+}
+.view-grid .card-actions { display: none; }
+.view-grid .card:hover { transform: none; }
+
+/* ── View Mode: Table ─────────────────────────────────────────────────────── */
+.grid.view-table {
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: 0 0 5rem;
+}
+.view-table .card { display: none; }
+
+.wine-table {
+  width: 100%; border-collapse: collapse;
+  background: var(--surface); border: none;
+  border-radius: 0; overflow: hidden;
+  font-size: .85rem; table-layout: fixed;
+}
+.wine-table td.wine-table-type,
+.wine-table th.wine-table-type { width: 40px; text-align: center !important; overflow: visible; text-overflow: clip; padding: .55rem .25rem; }
+.wine-table-right { text-align: right !important; }
+/* Fixed-width columns (px — constant at any viewport) */
+.wine-table-col-year { width: 90px; }
+.wine-table-col-region { width: 180px; }
+.wine-table-col-grape { width: 160px; }
+.wine-table-col-price { width: 110px; }
+.wine-table-col-qty { width: 70px; }
+.wine-table thead {
+  background: var(--bg); border-bottom: 2px solid var(--border);
+}
+.wine-table th {
+  padding: .6rem .75rem; text-align: left; font-weight: 600;
+  font-size: .75rem; text-transform: uppercase; letter-spacing: .03em;
+  color: var(--muted); white-space: nowrap;
+}
+.wine-table-sortable { cursor: pointer; user-select: none; }
+.wine-table-sortable:hover { color: var(--text); }
+.wine-table-sortable .mdi { font-size: .7rem; opacity: .5; margin-left: 2px; }
+.wine-table td {
+  padding: .55rem .75rem; border-bottom: 1px solid var(--border);
+  color: var(--text); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.wine-table-name { font-weight: 600; }
+.wine-table-row { cursor: pointer; transition: background .15s; }
+.wine-table-row:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.wine-table-row.empty { opacity: .5; }
+
+/* Type dot indicator for table view */
+.type-dot {
+  display: block; width: 10px; height: 10px;
+  border-radius: 50%; margin: 0 auto;
+}
+.type-dot-rotwein { background: var(--wine-rotwein); }
+.type-dot-weisswein { background: var(--wine-weisswein); }
+.type-dot-rose { background: var(--wine-rose); }
+.type-dot-schaumwein { background: var(--wine-schaumwein); }
+.type-dot-dessertwein { background: var(--wine-dessertwein); }
+.type-dot-likoerwein { background: var(--wine-likoerwein); }
+.type-dot-anderes { background: var(--wine-anderes); }
+
+@media (max-width: 600px) {
+  .grid.view-grid { grid-template-columns: repeat(2, 1fr); }
+  .view-list .card-body {
+    grid-template-columns: 1fr;
+    gap: .15rem 0;
+  }
+  .view-list .card-meta { display: flex; gap: .5rem; }
+  .view-list .card-meta span:first-child,
+  .view-list .card-meta span:nth-child(2) {
+    grid-column: auto; grid-row: auto;
+    text-align: left;
+  }
+  .view-list .card-extra {
+    grid-column: auto; grid-row: auto;
+    justify-content: flex-start; flex-wrap: wrap;
+  }
+  .view-list .card-name { max-width: none; }
+}
+
+/* ── Table: responsive column hiding ──────────────────────────────────────── */
+@media (max-width: 900px) {
+  .wine-table .col-grape,
+  .wine-table .col-price { display: none; }
+}
+@media (max-width: 700px) {
+  .wine-table .col-grape,
+  .wine-table .col-price,
+  .wine-table .col-region { display: none; }
+}
+@media (max-width: 500px) {
+  .wine-table .col-grape,
+  .wine-table .col-price,
+  .wine-table .col-region,
+  .wine-table .col-year { display: none; }
+  .wine-table-type .mdi { display: none; }
+}
+
 /* ── Index: Empty State ────────────────────────────────────────────────────── */
 .empty-state {
   text-align: center; padding: 4rem 2rem; color: var(--muted);
@@ -858,10 +1086,10 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
 .theme-seg-btn + .theme-seg-btn { border-left: 1px solid var(--border); }
 .theme-seg-btn:hover { color: var(--text); background: var(--surface); }
 .theme-seg-btn.active {
-  color: var(--bg); background: var(--gold); font-weight: 700;
-  border-color: var(--gold);
+  color: #fff; background: var(--accent); font-weight: 700;
+  border-color: var(--accent);
 }
-.theme-seg-btn.active + .theme-seg-btn { border-left-color: var(--gold); }
+.theme-seg-btn.active + .theme-seg-btn { border-left-color: var(--accent); }
 .theme-seg-btn .mdi { font-size: 1rem; }
 
 /* ── Wine Modal: narrow by default, wide only when form is shown ───────────── */

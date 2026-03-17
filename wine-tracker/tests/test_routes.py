@@ -85,6 +85,35 @@ class TestIndex:
         assert b"Full Wine" in resp.data
         assert b"Empty Wine" not in resp.data
 
+    def test_view_toggle_buttons_present(self, client):
+        """Settings modal should contain view mode radio buttons for all 4 view modes."""
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert 'view-mode-radios' in html
+        assert 'value="cards"' in html
+        assert 'value="list"' in html
+        assert 'value="grid"' in html
+        assert 'value="table"' in html
+        assert 'mdi-view-module' in html
+        assert 'mdi-view-list' in html
+        assert 'mdi-view-grid' in html
+        assert 'mdi-table' in html
+
+    def test_view_mode_js_functions_present(self, client):
+        """Index page should contain JS functions for view mode switching."""
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert 'setViewMode' in html
+        assert 'renderTableView' in html
+        assert 'wineViewMode' in html
+
+    def test_wine_grid_has_view_class(self, client):
+        """Wine grid container should have view-cards class and id."""
+        resp = client.get("/")
+        html = resp.data.decode()
+        assert 'id="wineGrid"' in html
+        assert 'view-cards' in html
+
 
 # ── POST /add ─────────────────────────────────────────────────────────────────
 

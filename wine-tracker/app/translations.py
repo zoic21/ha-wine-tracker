@@ -244,6 +244,20 @@ TRANSLATIONS = {
     "taste_acidity": "S\u00e4ure",
     "taste_sweetness": "S\u00fc\u00dfe",
     "food_pairings": "Passt zu",
+
+    # View modes
+    "view_mode": "Ansicht des Weinkellers",
+    "view_cards": "Karten",
+    "view_list": "Liste",
+    "view_grid": "Raster",
+    "view_table": "Tabelle",
+    "table_col_name": "Name",
+    "table_col_type": "Typ",
+    "table_col_year": "Jahrgang",
+    "table_col_region": "Region",
+    "table_col_grape": "Rebsorte",
+    "table_col_price": "Preis",
+    "table_col_quantity": "Anzahl",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -474,6 +488,20 @@ TRANSLATIONS = {
     "taste_acidity": "Acidity",
     "taste_sweetness": "Sweetness",
     "food_pairings": "Food Pairings",
+
+    # View modes
+    "view_mode": "Cellar View",
+    "view_cards": "Cards",
+    "view_list": "List",
+    "view_grid": "Grid",
+    "view_table": "Table",
+    "table_col_name": "Name",
+    "table_col_type": "Type",
+    "table_col_year": "Year",
+    "table_col_region": "Region",
+    "table_col_grape": "Grape",
+    "table_col_price": "Price",
+    "table_col_quantity": "Qty",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -704,6 +732,20 @@ TRANSLATIONS = {
     "taste_acidity": "Acidit\u00e9",
     "taste_sweetness": "Sucrosit\u00e9",
     "food_pairings": "Accords mets",
+
+    # View modes
+    "view_mode": "Vue de la cave",
+    "view_cards": "Cartes",
+    "view_list": "Liste",
+    "view_grid": "Grille",
+    "view_table": "Tableau",
+    "table_col_name": "Nom",
+    "table_col_type": "Type",
+    "table_col_year": "Millésime",
+    "table_col_region": "Région",
+    "table_col_grape": "Cépage",
+    "table_col_price": "Prix",
+    "table_col_quantity": "Qté",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -934,6 +976,20 @@ TRANSLATIONS = {
     "taste_acidity": "Acidit\u00e0",
     "taste_sweetness": "Dolcezza",
     "food_pairings": "Abbinamenti",
+
+    # View modes
+    "view_mode": "Vista della cantina",
+    "view_cards": "Schede",
+    "view_list": "Lista",
+    "view_grid": "Griglia",
+    "view_table": "Tabella",
+    "table_col_name": "Nome",
+    "table_col_type": "Tipo",
+    "table_col_year": "Annata",
+    "table_col_region": "Regione",
+    "table_col_grape": "Vitigno",
+    "table_col_price": "Prezzo",
+    "table_col_quantity": "Qtà",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1164,6 +1220,20 @@ TRANSLATIONS = {
     "taste_acidity": "Acidez",
     "taste_sweetness": "Dulzura",
     "food_pairings": "Maridaje",
+
+    # View modes
+    "view_mode": "Vista de la bodega",
+    "view_cards": "Tarjetas",
+    "view_list": "Lista",
+    "view_grid": "Cuadrícula",
+    "view_table": "Tabla",
+    "table_col_name": "Nombre",
+    "table_col_type": "Tipo",
+    "table_col_year": "Añada",
+    "table_col_region": "Región",
+    "table_col_grape": "Uva",
+    "table_col_price": "Precio",
+    "table_col_quantity": "Cant.",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1394,6 +1464,20 @@ TRANSLATIONS = {
     "taste_acidity": "Acidez",
     "taste_sweetness": "Do\u00e7ura",
     "food_pairings": "Harmoniza\u00e7\u00e3o",
+
+    # View modes
+    "view_mode": "Vista da adega",
+    "view_cards": "Cart\u00f5es",
+    "view_list": "Lista",
+    "view_grid": "Grelha",
+    "view_table": "Tabela",
+    "table_col_name": "Nome",
+    "table_col_type": "Tipo",
+    "table_col_year": "Safra",
+    "table_col_region": "Regi\u00e3o",
+    "table_col_grape": "Casta",
+    "table_col_price": "Pre\u00e7o",
+    "table_col_quantity": "Qtd.",
 },
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1624,6 +1708,20 @@ TRANSLATIONS = {
     "taste_acidity": "Zuurgraad",
     "taste_sweetness": "Zoetheid",
     "food_pairings": "Past bij",
+
+    # View modes
+    "view_mode": "Kelderweergave",
+    "view_cards": "Kaarten",
+    "view_list": "Lijst",
+    "view_grid": "Raster",
+    "view_table": "Tabel",
+    "table_col_name": "Naam",
+    "table_col_type": "Type",
+    "table_col_year": "Jaar",
+    "table_col_region": "Regio",
+    "table_col_grape": "Druif",
+    "table_col_price": "Prijs",
+    "table_col_quantity": "Aantal",
 },
 
 }  # end TRANSLATIONS

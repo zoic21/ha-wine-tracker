@@ -50,8 +50,8 @@ function cycleTheme() {
 
 function updateThemeSegmented() {
   var current = localStorage.getItem('wine-theme') || 'system';
-  document.querySelectorAll('.theme-seg-btn').forEach(function(btn) {
-    btn.classList.toggle('active', btn.dataset.theme === current);
+  document.querySelectorAll('input[name="themeMode"]').forEach(function(r) {
+    r.checked = (r.value === current);
   });
 }
 

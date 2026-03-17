@@ -57,13 +57,46 @@
           </div>
         </div>
 
-        <div class="settings-row">
-          <div class="settings-row-label">{{ t.settings_mode }}</div>
+        <div class="settings-row" style="align-items: flex-start;">
+          <div class="settings-row-label" style="padding-top: .45rem;">{{ t.settings_mode }}</div>
           <div class="settings-row-control">
-            <div class="theme-segmented">
-              <button class="theme-seg-btn" data-theme="system" onclick="setThemeMode('system')"><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</button>
-              <button class="theme-seg-btn" data-theme="dark" onclick="setThemeMode('dark')"><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</button>
-              <button class="theme-seg-btn" data-theme="light" onclick="setThemeMode('light')"><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</button>
+            <div class="view-mode-radios">
+              <label class="view-mode-radio" onclick="setThemeMode('system')">
+                <input type="radio" name="themeMode" value="system" checked>
+                <span><i class="mdi mdi-laptop"></i> {{ t.theme_system }}</span>
+              </label>
+              <label class="view-mode-radio" onclick="setThemeMode('dark')">
+                <input type="radio" name="themeMode" value="dark">
+                <span><i class="mdi mdi-weather-night"></i> {{ t.theme_dark }}</span>
+              </label>
+              <label class="view-mode-radio" onclick="setThemeMode('light')">
+                <input type="radio" name="themeMode" value="light">
+                <span><i class="mdi mdi-weather-sunny"></i> {{ t.theme_light }}</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items: flex-start;">
+          <div class="settings-row-label" style="padding-top: .45rem;">{{ t.view_mode }}</div>
+          <div class="settings-row-control">
+            <div class="view-mode-radios">
+              <label class="view-mode-radio" onclick="setViewMode('cards')">
+                <input type="radio" name="viewMode" value="cards" checked>
+                <span><i class="mdi mdi-view-module"></i> {{ t.view_cards }}</span>
+              </label>
+              <label class="view-mode-radio" onclick="setViewMode('list')">
+                <input type="radio" name="viewMode" value="list">
+                <span><i class="mdi mdi-view-list"></i> {{ t.view_list }}</span>
+              </label>
+              <label class="view-mode-radio" onclick="setViewMode('grid')">
+                <input type="radio" name="viewMode" value="grid">
+                <span><i class="mdi mdi-view-grid"></i> {{ t.view_grid }}</span>
+              </label>
+              <label class="view-mode-radio" onclick="setViewMode('table')">
+                <input type="radio" name="viewMode" value="table">
+                <span><i class="mdi mdi-table"></i> {{ t.view_table }}</span>
+              </label>
             </div>
           </div>
         </div>
