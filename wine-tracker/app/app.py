@@ -13,22 +13,35 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 
 # ── Authentication (optional, for standalone Docker deployment) ───────────────
-AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").lower() == "true"
+# DEV_AUTH enables auth without a full HA setup: "user:pass" or "user:pass:role"
+# Multiple users: "admin:pass:admin,viewer:pass:readonly"
 
-# Parse USERS env: "admin:pass,user2:pass2,guest:pw:readonly"
-_USERS = {}
-if AUTH_ENABLED:
-    for pair in os.environ.get("USERS", "").split(","):
+def parse_user_string(raw):
+    """Parse a user definition string into a dict of {username: {hash, role}}.
+
+    Format: "user:pass" or "user:pass:role", comma-separated for multiple users.
+    Default role is "admin" when omitted.
+    """
+    users = {}
+    for pair in raw.split(","):
         pair = pair.strip()
         if ":" in pair:
             parts = pair.split(":", 2)  # max 3 parts
             user = parts[0].strip()
             pw = parts[1].strip()
             role = parts[2].strip() if len(parts) > 2 else "admin"
-            _USERS[user] = {
+            users[user] = {
                 "hash": generate_password_hash(pw, method="pbkdf2:sha256"),
                 "role": role,
             }
+    return users
+
+
+_dev_auth = os.environ.get("DEV_AUTH", "")
+AUTH_ENABLED = os.environ.get("AUTH_ENABLED", "false").lower() == "true" or bool(_dev_auth.strip())
+
+_users_raw = _dev_auth if _dev_auth.strip() else os.environ.get("USERS", "")
+_USERS = parse_user_string(_users_raw) if AUTH_ENABLED else {}
 
 # ── HA Add-on Options ─────────────────────────────────────────────────────────
 OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")

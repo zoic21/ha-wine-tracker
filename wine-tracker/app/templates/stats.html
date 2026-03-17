@@ -21,6 +21,13 @@
     <a class="nav-link" href="{{ ingress }}/timeline">{{ t.timeline }}</a>
     <a class="nav-link active" href="{{ ingress }}/stats">{{ t.stats_title }}</a>
   </nav>
+  <button class="nav-hamburger" onclick="toggleNavMenu(event)" aria-label="Menu"><i class="mdi mdi-menu"></i></button>
+  <div class="nav-menu" id="navMenu">
+    <a href="{{ ingress }}/" class="nav-menu-item">{{ t.nav_cellar }}</a>
+    {% if ai_enabled %}<a href="#" class="nav-menu-item" onclick="event.preventDefault();toggleNavMenu();toggleChatPanel()">{{ t.chat_title }}</a>{% endif %}
+    <a href="{{ ingress }}/timeline" class="nav-menu-item">{{ t.timeline }}</a>
+    <a href="{{ ingress }}/stats" class="nav-menu-item active">{{ t.stats_title }}</a>
+  </div>
   <div class="header-spacer"></div>
   <button class="theme-toggle" onclick="openModal('settingsModal')" title="{{ t.settings_title }}"><i class="mdi mdi-cog"></i></button>
 </header>
@@ -355,6 +362,25 @@
 
 <script src="{{ ingress }}/static/theme.js"></script>
 <script>
+// ── Hamburger Nav Menu ──────────────────────────────────────────────────────
+function toggleNavMenu(e) {
+  if (e) e.stopPropagation();
+  var menu = document.getElementById('navMenu');
+  menu.classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  var menu = document.getElementById('navMenu');
+  if (menu && menu.classList.contains('open') && !e.target.closest('.nav-hamburger') && !e.target.closest('.nav-menu')) {
+    menu.classList.remove('open');
+  }
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var menu = document.getElementById('navMenu');
+    if (menu) menu.classList.remove('open');
+  }
+});
+
 var WINE_DATA = {
   byType: {{ wines_by_type | tojson }},
   byRegion: {{ wines_by_region | tojson }},

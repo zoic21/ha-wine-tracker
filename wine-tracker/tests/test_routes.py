@@ -881,3 +881,80 @@ class TestAuth:
         resp = client.get("/")
         assert resp.status_code == 200
         assert b"AUTH_READONLY = true" in resp.data
+
+
+# ── DEV_AUTH ─────────────────────────────────────────────────────────────────
+
+class TestDevAuth:
+    """Tests for the DEV_AUTH environment variable shortcut."""
+
+    def _make_dev_auth_app(self, dev_auth_str):
+        """Simulate DEV_AUTH by parsing it and setting module globals."""
+        import app as wine_app
+
+        users = wine_app.parse_user_string(dev_auth_str)
+        wine_app.AUTH_ENABLED = True
+        wine_app._USERS = users
+        wine_app.app.config["TESTING"] = True
+        wine_app.app.secret_key = "test-secret"
+        wine_app.init_db()
+        return wine_app.app.test_client()
+
+    def teardown_method(self):
+        import app as wine_app
+        wine_app.AUTH_ENABLED = False
+        wine_app._USERS = {}
+
+    def test_dev_auth_single_user_login(self):
+        """DEV_AUTH with single user should allow login."""
+        client = self._make_dev_auth_app("dev:devpass")
+        resp = client.get("/")
+        assert resp.status_code == 302
+        assert "/login" in resp.headers["Location"]
+        resp = client.post("/login", data={"username": "dev", "password": "devpass"})
+        assert resp.status_code == 302
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_dev_auth_with_role(self):
+        """DEV_AUTH user with readonly role should be restricted."""
+        client = self._make_dev_auth_app("viewer:pass:readonly")
+        client.post("/login", data={"username": "viewer", "password": "pass"})
+        resp = client.post(
+            "/add",
+            data={"name": "Test"},
+            headers={"X-Requested-With": "XMLHttpRequest"},
+        )
+        assert resp.status_code == 403
+
+    def test_dev_auth_multiple_users(self):
+        """DEV_AUTH with multiple users should allow each to login."""
+        client = self._make_dev_auth_app("admin:pass1:admin,viewer:pass2:readonly")
+        # Admin can login
+        client.post("/login", data={"username": "admin", "password": "pass1"})
+        resp = client.get("/")
+        assert resp.status_code == 200
+        client.get("/logout")
+        # Viewer can login
+        client.post("/login", data={"username": "viewer", "password": "pass2"})
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    def test_dev_auth_wrong_password_rejected(self):
+        """DEV_AUTH should reject wrong passwords."""
+        client = self._make_dev_auth_app("admin:secret")
+        resp = client.post("/login", data={"username": "admin", "password": "wrong"})
+        assert resp.status_code == 200  # Re-renders login page
+        resp = client.get("/")
+        assert resp.status_code == 302  # Still redirects to login
+
+    def test_dev_auth_logout(self):
+        """Logout should work with DEV_AUTH users."""
+        client = self._make_dev_auth_app("admin:pass")
+        client.post("/login", data={"username": "admin", "password": "pass"})
+        resp = client.get("/")
+        assert resp.status_code == 200
+        client.get("/logout")
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/login" in resp.headers["Location"]

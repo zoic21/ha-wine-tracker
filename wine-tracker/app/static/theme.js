@@ -92,7 +92,18 @@ function getThemeLabel(key) {
 function toggleThemeDropdown(e) {
   if (e) e.stopPropagation();
   var dd = document.querySelector('.theme-dropdown');
-  if (dd) dd.classList.toggle('open');
+  if (!dd) return;
+  dd.classList.toggle('open');
+  if (dd.classList.contains('open')) {
+    var btn = dd.querySelector('.theme-dropdown-btn');
+    var list = dd.querySelector('.theme-dropdown-list');
+    if (btn && list) {
+      var r = btn.getBoundingClientRect();
+      list.style.top = (r.bottom + 4) + 'px';
+      list.style.left = r.left + 'px';
+      list.style.width = r.width + 'px';
+    }
+  }
 }
 
 // Close dropdown when clicking outside

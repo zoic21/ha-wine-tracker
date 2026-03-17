@@ -298,3 +298,61 @@ class TestViewModalTranslations:
             assert "modal_view_title" in TRANSLATIONS[lang], f"Missing modal_view_title in {lang}"
             assert "btn_close" in TRANSLATIONS[lang], f"Missing btn_close in {lang}"
             assert "view_drink_window" in TRANSLATIONS[lang], f"Missing view_drink_window in {lang}"
+
+
+# ── parse_user_string / DEV_AUTH ─────────────────────────────────────────────
+
+class TestParseUserString:
+    """Tests for parse_user_string() used by AUTH_ENABLED and DEV_AUTH."""
+
+    def test_single_user_default_role(self):
+        """Single user without role should default to 'admin'."""
+        from werkzeug.security import check_password_hash
+        result = wine_app.parse_user_string("myuser:mypass")
+        assert "myuser" in result
+        assert result["myuser"]["role"] == "admin"
+        assert check_password_hash(result["myuser"]["hash"], "mypass")
+
+    def test_single_user_with_role(self):
+        """Single user with explicit role should use that role."""
+        result = wine_app.parse_user_string("viewer:secret:readonly")
+        assert "viewer" in result
+        assert result["viewer"]["role"] == "readonly"
+
+    def test_multiple_users(self):
+        """Comma-separated users should all be parsed."""
+        result = wine_app.parse_user_string("admin:pass1:admin,viewer:pass2:readonly")
+        assert len(result) == 2
+        assert result["admin"]["role"] == "admin"
+        assert result["viewer"]["role"] == "readonly"
+
+    def test_empty_string(self):
+        """Empty string should return empty dict."""
+        result = wine_app.parse_user_string("")
+        assert result == {}
+
+    def test_whitespace_only(self):
+        """Whitespace-only string should return empty dict."""
+        result = wine_app.parse_user_string("   ")
+        assert result == {}
+
+    def test_strips_whitespace(self):
+        """Whitespace around entries should be stripped."""
+        result = wine_app.parse_user_string("  admin : pass : admin , viewer : pw : readonly  ")
+        assert "admin" in result
+        assert "viewer" in result
+        assert result["admin"]["role"] == "admin"
+        assert result["viewer"]["role"] == "readonly"
+
+    def test_invalid_entry_skipped(self):
+        """Entries without colon should be skipped."""
+        result = wine_app.parse_user_string("valid:pass,invalidentry")
+        assert len(result) == 1
+        assert "valid" in result
+
+    def test_password_hash_is_valid(self):
+        """Parsed passwords should be properly hashed and verifiable."""
+        from werkzeug.security import check_password_hash
+        result = wine_app.parse_user_string("test:hunter2")
+        assert check_password_hash(result["test"]["hash"], "hunter2")
+        assert not check_password_hash(result["test"]["hash"], "wrongpass")
