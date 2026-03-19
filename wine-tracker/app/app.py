@@ -4,6 +4,7 @@ import secrets
 import shutil
 import sqlite3
 import uuid
+from collections import defaultdict
 from datetime import date, datetime
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, jsonify, g, session
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1000,7 +1001,6 @@ def stats_page():
     out_of_stock = db.execute("SELECT COUNT(*) FROM wines WHERE quantity = 0").fetchone()[0] or 0
 
     # Drink window chart – bottles per year, stacked by type
-    from collections import defaultdict
     dw_wines = [dict(r) for r in db.execute(
         "SELECT id, name, year, type, quantity, drink_from, drink_until FROM wines "
         "WHERE drink_until IS NOT NULL AND drink_until != '' AND quantity > 0"
@@ -1030,6 +1030,67 @@ def stats_page():
         dw_chart = []
         dw_type_order = []
         dw_wine_names = {}
+
+    # Stock history – last 6 months
+    today = date.today()
+    current_stock = totals["bottles"] or 0
+
+    def month_add(y, m, n):
+        m2 = m - 1 + n
+        return y + m2 // 12, m2 % 12 + 1
+
+    start_y, start_m = month_add(today.year, today.month, -6)
+    first_of_six = date(start_y, start_m, 1)
+
+    tl_rows = db.execute(
+        "SELECT action, quantity, timestamp FROM timeline "
+        "WHERE action IN ('added','consumed','restocked','removed') "
+        "AND timestamp >= ? ORDER BY timestamp",
+        (first_of_six.isoformat(),)
+    ).fetchall()
+
+    monthly_delta = defaultdict(lambda: {"added": 0, "consumed": 0, "restocked": 0, "removed": 0})
+    for row in tl_rows:
+        ts = row["timestamp"][:7]  # "YYYY-MM"
+        monthly_delta[ts][row["action"]] += row["quantity"]
+
+    months = []
+    cy, cm = start_y, start_m
+    ty, tm = today.year, today.month
+    while (cy, cm) <= (ty, tm):
+        months.append(f"{cy}-{cm:02d}")
+        cy, cm = month_add(cy, cm, 1)
+
+    total_net = 0
+    for m in months:
+        md = monthly_delta[m]
+        total_net += md["added"] + md["restocked"] - md["consumed"] - md["removed"]
+    start_stock = current_stock - total_net
+
+    stock_chart = []
+    running = start_stock
+    month_names_short = {
+        "de": ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+        "en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        "fr": ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
+        "it": ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"],
+        "es": ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
+        "pt": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+        "nl": ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+    }
+    m_names = month_names_short.get(LANG, month_names_short["en"])
+    for m in months:
+        md = monthly_delta[m]
+        net = md["added"] + md["restocked"] - md["consumed"] - md["removed"]
+        running += net
+        month_idx = int(m[5:7]) - 1
+        year_short = m[2:4]
+        stock_chart.append({
+            "label": f"{m_names[month_idx]} {year_short}",
+            "stock": max(running, 0),
+            "added": md["added"] + md["restocked"],
+            "consumed": md["consumed"] + md["removed"],
+        })
 
     # Tooltip data – wine names grouped by type and region
     wines_by_type = {}
@@ -1070,6 +1131,7 @@ def stats_page():
         dw_chart=dw_chart,
         dw_type_order=dw_type_order,
         dw_wine_names=dw_wine_names,
+        stock_chart=stock_chart,
         wines_by_type=wines_by_type,
         wines_by_region=wines_by_region,
         type_translations=type_translations,

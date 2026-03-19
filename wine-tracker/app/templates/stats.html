@@ -339,6 +339,75 @@
 </div>
 {% endif %}
 
+<!-- ═══════ STOCK HISTORY CHART ═══════ -->
+{% if stock_chart and stock_chart|length > 1 %}
+{% set sc_max = stock_chart|map(attribute='stock')|max %}
+{% set sc_min = stock_chart|map(attribute='stock')|min %}
+{% set sc_range = [sc_max - sc_min, 1]|max %}
+{% set sc_pad_top = (sc_range * 0.15)|round|int %}
+{% set sc_pad_bot = (sc_range * 0.1)|round|int %}
+{% set y_max = sc_max + sc_pad_top %}
+{% set y_min = [sc_min - sc_pad_bot, 0]|max %}
+{% set y_range = [y_max - y_min, 1]|max %}
+<div class="stat-grid">
+  <div class="stat-card stock-chart-card">
+    <h2><i class="mdi mdi-chart-timeline-variant-shimmer"></i> {{ t.stat_stock_title }}</h2>
+    <div class="stat-body">
+      <p class="stat-subtitle">{{ t.stat_stock_subtitle }}</p>
+      <div class="stock-chart-wrap">
+        <svg class="stock-chart-svg" viewBox="0 0 600 260" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="stockGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0.03"/>
+            </linearGradient>
+          </defs>
+          <!-- Grid lines -->
+          {% for i in range(5) %}
+          {% set gy = 20 + i * 55 %}
+          <line x1="45" y1="{{ gy }}" x2="585" y2="{{ gy }}" stroke="var(--border)" stroke-width="0.5" stroke-dasharray="4,4"/>
+          {% set label_val = (y_max - (i / 4) * y_range)|round|int %}
+          <text x="40" y="{{ gy + 4 }}" text-anchor="end" fill="var(--text-muted)" font-size="11">{{ label_val }}</text>
+          {% endfor %}
+          <!-- Area fill -->
+          {% set ns = namespace(area_points="", line_points="") %}
+          {% for pt in stock_chart %}
+          {% set px = 60 + loop.index0 * ((525) / ([stock_chart|length - 1, 1]|max)) %}
+          {% set py = 20 + ((y_max - pt.stock) / y_range * 220) %}
+          {% set ns.line_points = ns.line_points ~ px|string ~ "," ~ py|round|string ~ " " %}
+          {% if loop.first %}{% set ns.area_points = px|string ~ ",240 " %}{% endif %}
+          {% set ns.area_points = ns.area_points ~ px|string ~ "," ~ py|round|string ~ " " %}
+          {% if loop.last %}{% set ns.area_points = ns.area_points ~ px|string ~ ",240" %}{% endif %}
+          {% endfor %}
+          <polygon points="{{ ns.area_points }}" fill="url(#stockGrad)"/>
+          <polyline points="{{ ns.line_points }}" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- Data points & invisible hover targets -->
+          {% for pt in stock_chart %}
+          {% set px = 60 + loop.index0 * ((525) / ([stock_chart|length - 1, 1]|max)) %}
+          {% set py = 20 + ((y_max - pt.stock) / y_range * 220) %}
+          <circle cx="{{ px }}" cy="{{ py|round }}" r="4" fill="var(--accent)" stroke="var(--bg)" stroke-width="2" class="stock-dot"/>
+          <circle cx="{{ px }}" cy="{{ py|round }}" r="18" fill="transparent" class="stock-hover-target"
+                  data-stock="{{ pt.stock }}" data-added="{{ pt.added }}" data-consumed="{{ pt.consumed }}" data-label="{{ pt.label }}"/>
+          {% endfor %}
+        </svg>
+        <!-- X-axis labels -->
+        <div class="stock-chart-labels">
+          {% for pt in stock_chart %}
+          <span>{{ pt.label }}</span>
+          {% endfor %}
+        </div>
+        <!-- Tooltip -->
+        <div class="stock-tooltip" id="stockTooltip" style="display:none">
+          <div class="stock-tooltip-label"></div>
+          <div class="stock-tooltip-value"></div>
+          <div class="stock-tooltip-detail"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 {% endif %}
 </div>
 
@@ -655,6 +724,54 @@ function editWine(id) {
       hideTip();
     }
   }, { passive: false });
+})();
+
+// ── Stock Chart Tooltip ──
+(function() {
+  var tip = document.getElementById('stockTooltip');
+  if (!tip) return;
+  var wrap = tip.parentElement;
+  var lblEl = tip.querySelector('.stock-tooltip-label');
+  var valEl = tip.querySelector('.stock-tooltip-value');
+  var detEl = tip.querySelector('.stock-tooltip-detail');
+  var T_BOTTLES = {{ t.stat_stock_bottles|tojson }};
+  var T_ADDED = {{ t.stat_stock_added|tojson }};
+  var T_CONSUMED = {{ t.stat_stock_consumed|tojson }};
+
+  document.querySelectorAll('.stock-hover-target').forEach(function(el) {
+    function show() {
+      var stock = el.getAttribute('data-stock');
+      var added = el.getAttribute('data-added');
+      var consumed = el.getAttribute('data-consumed');
+      var label = el.getAttribute('data-label');
+      lblEl.textContent = label;
+      valEl.textContent = stock + ' ' + T_BOTTLES;
+      var parts = [];
+      if (parseInt(added) > 0) parts.push('+' + added + ' ' + T_ADDED);
+      if (parseInt(consumed) > 0) parts.push('-' + consumed + ' ' + T_CONSUMED);
+      detEl.textContent = parts.join('  ·  ');
+      var svg = wrap.querySelector('svg');
+      var rect = svg.getBoundingClientRect();
+      var cx = parseFloat(el.getAttribute('cx'));
+      var cy = parseFloat(el.getAttribute('cy'));
+      var px = (cx / 600) * rect.width;
+      var py = (cy / 260) * rect.height;
+      tip.style.display = '';
+      tip.style.left = px + 'px';
+      tip.style.top = (py - 10) + 'px';
+      tip.classList.add('visible');
+    }
+    function hide() { tip.classList.remove('visible'); setTimeout(function() { if (!tip.classList.contains('visible')) tip.style.display = 'none'; }, 200); }
+    el.addEventListener('mouseenter', show);
+    el.addEventListener('mouseleave', hide);
+    el.addEventListener('touchstart', function(e) { e.preventDefault(); show(); }, { passive: false });
+  });
+  document.addEventListener('touchstart', function(e) {
+    if (!e.target.closest('.stock-hover-target') && !tip.contains(e.target)) {
+      tip.classList.remove('visible');
+      tip.style.display = 'none';
+    }
+  }, { passive: true });
 })();
 </script>
 

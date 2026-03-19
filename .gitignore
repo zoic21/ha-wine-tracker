@@ -2,5 +2,7 @@ RUN_LOCAL_INFO.md
 wine-tracker/.pytest_cache/
 wine-tracker/app/__pycache__/
 wine-tracker/app/data/
+wine-tracker/tests/__pycache__/
+.DS_Store
 .claude/
 CLAUDE.md

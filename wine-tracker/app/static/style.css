@@ -1475,6 +1475,37 @@ textarea { resize: vertical; min-height: 70px; font-family: inherit; }
 .dw-legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; margin-top: 1rem; font-size: .78rem; }
 .dw-legend-item { display: flex; align-items: center; gap: .3rem; }
 
+/* ── Stats: Stock History Chart ─────────────────────────────────────────────── */
+.stock-chart-card { grid-column: 1 / -1; }
+.stock-chart-wrap { position: relative; }
+.stock-chart-svg {
+  width: 100%; height: auto; display: block;
+  aspect-ratio: 600 / 260;
+}
+.stock-dot { transition: r .15s ease; }
+.stock-hover-target { cursor: pointer; }
+.stock-hover-target:hover ~ .stock-dot,
+.stock-hover-target:hover + .stock-dot { r: 6; }
+.stock-chart-labels {
+  display: flex; justify-content: space-between;
+  padding: 8px 10% 0 10%;
+  font-size: .75rem; color: var(--muted);
+}
+.stock-tooltip {
+  position: absolute; z-index: 10;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: .5rem .7rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.25);
+  pointer-events: none; white-space: nowrap;
+  transform: translate(-50%, -100%);
+  opacity: 0; transition: opacity .15s ease;
+  font-size: .8rem;
+}
+.stock-tooltip.visible { opacity: 1; }
+.stock-tooltip-label { font-weight: 700; font-size: .82rem; margin-bottom: 2px; }
+.stock-tooltip-value { color: var(--accent); font-weight: 600; }
+.stock-tooltip-detail { color: var(--muted); font-size: .72rem; margin-top: 2px; }
+
 /* ── Stats: Chart Tooltip ────────────────────────────────────────────────────── */
 .chart-tooltip {
   position: fixed; z-index: 500;
