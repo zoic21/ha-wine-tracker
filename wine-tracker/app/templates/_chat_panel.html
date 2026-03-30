@@ -174,7 +174,11 @@ function loadMostRecentSession() {
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.ok && data.sessions.length > 0) {
-        loadChatSession(data.sessions[0].id);
+        var s = data.sessions[0];
+        var age = Date.now() - new Date(s.updated).getTime();
+        if (age < 3600000) {
+          loadChatSession(s.id);
+        }
       }
     });
 }

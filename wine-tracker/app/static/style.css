@@ -2096,6 +2096,20 @@ body.chat-page .grid { display: none; }
   background: var(--surface);
 }
 .chat-fullpage-toolbar .chat-header-btn { color: var(--accent); }
+.chat-header-actions {
+  display: none;
+  align-items: center;
+  gap: .25rem;
+}
+.chat-header-actions .chat-header-btn {
+  color: var(--accent);
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
 
 @media (max-width: 768px) {
   .chat-fullpage-sidebar { display: none !important; }
@@ -2107,6 +2121,7 @@ body.chat-page .grid { display: none; }
     width: 280px;
     box-shadow: 4px 0 16px rgba(0,0,0,.2);
   }
-  .chat-fullpage-toolbar { display: flex; }
+  .chat-fullpage-toolbar { display: none !important; }
+  .chat-header-actions { display: flex; }
   .chat-sidebar-close { display: inline-flex; }
 }

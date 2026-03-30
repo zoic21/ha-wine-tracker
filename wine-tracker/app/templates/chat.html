@@ -27,6 +27,10 @@
     <a href="{{ ingress }}/stats" class="nav-menu-item">{{ t.stats_title }}</a>
   </div>
   <div class="header-spacer"></div>
+  <div class="chat-header-actions">
+    <button class="chat-header-btn" onclick="toggleChatSidebar()" title="{{ t.chat_history }}"><i class="mdi mdi-history"></i></button>
+    <button class="chat-header-btn" onclick="startNewChatSession()" title="{{ t.chat_new }}"><i class="mdi mdi-plus"></i></button>
+  </div>
   <button class="theme-toggle" onclick="openModal('settingsModal')" title="{{ t.settings_title }}"><i class="mdi mdi-cog"></i></button>
 </header>
 
@@ -564,7 +568,11 @@ document.querySelector('.chat-fullpage').addEventListener('click', function(e) {
       .then(function(r) { return r.json(); })
       .then(function(data) {
         if (data.ok && data.sessions.length > 0) {
-          loadChatSession(data.sessions[0].id);
+          var s = data.sessions[0];
+          var age = Date.now() - new Date(s.updated).getTime();
+          if (age < 3600000) {
+            loadChatSession(s.id);
+          }
         }
         // Load sidebar list
         if (_chatSidebarOpen) loadChatSidebarList();
