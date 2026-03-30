@@ -121,6 +121,12 @@ function toggleChatRecording(enabled) {
 function initChatRecordingToggle() {
   var el = document.getElementById('chatRecordingToggle');
   if (el) el.checked = localStorage.getItem('chatRecording') !== '0'; // default ON
+  var el2 = document.getElementById('chatEditWinesToggle');
+  if (el2) el2.checked = localStorage.getItem('chatEditWines') === '1'; // default OFF
+}
+
+function toggleChatEditWines(enabled) {
+  localStorage.setItem('chatEditWines', enabled ? '1' : '0');
 }
 
 // Apply theme name on load (mode is handled by inline script + OS listener)

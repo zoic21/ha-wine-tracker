@@ -1936,6 +1936,21 @@ body.chat-page .grid { display: none; }
   display: block; max-width: 120px; border-radius: 6px;
   margin-bottom: .4rem;
 }
+.chat-wine-added {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .5rem .75rem; border-radius: 8px;
+  background: color-mix(in srgb, #27ae60 15%, transparent);
+  color: #27ae60; font-size: .85rem; font-weight: 600;
+}
+.chat-wine-added a { color: #27ae60; text-decoration: underline; }
+.chat-wine-added .mdi { font-size: 1.1rem; }
+.chat-wine-deleted {
+  display: flex; align-items: center; gap: .4rem;
+  padding: .5rem .75rem; border-radius: 8px;
+  background: color-mix(in srgb, #e74c3c 15%, transparent);
+  color: #e74c3c; font-size: .85rem; font-weight: 600;
+}
+.chat-wine-deleted .mdi { font-size: 1.1rem; }
 
 /* ── Chat Header Buttons ─────────────────────────────────────────────────────── */
 .chat-header-btn {

@@ -102,7 +102,8 @@
         </div>
       </div>
 
-      <!-- Chat -->
+      <!-- Chat (only when AI is configured) -->
+      {% if ai_enabled %}
       <div class="settings-section">
         <div class="settings-section-title">{{ t.settings_chat }}</div>
         <div class="settings-row">
@@ -114,7 +115,17 @@
             </label>
           </div>
         </div>
+        <div class="settings-row">
+          <div class="settings-row-label">{{ t.settings_chat_edit_wines }}</div>
+          <div class="settings-row-control">
+            <label class="toggle-switch">
+              <input type="checkbox" id="chatEditWinesToggle" onchange="toggleChatEditWines(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
       </div>
+      {% endif %}
 
       <!-- About -->
       <div class="settings-section">

@@ -1066,6 +1066,288 @@ class TestChatRecordingToggle:
         assert len(chat_entries) == 0
 
 
+# ── Chat Wine Editing ────────────────────────────────────────────────────────
+
+class TestChatWineEditing:
+    """Tests for adding wines to the cellar via chat."""
+
+    CHAT_OPTS = TestWineChat.CHAT_OPTS
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_add_wine_creates_wine(self, mock_opts, mock_chat, client):
+        """When AI responds with [ADD_WINE] block, wine should be created in DB."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'Ich habe den Wein für dich erfasst!\n\n'
+            '[ADD_WINE]\n'
+            '{"name": "Chateau Test", "year": 2020, "wine_type": "Rotwein", '
+            '"region": "Bordeaux, France", "grape": "Merlot", "quantity": 1, '
+            '"rating": 4, "notes": "Elegant and smooth", "price": 25.50, '
+            '"drink_from": 2022, "drink_until": 2030, "location": "Keller A", '
+            '"image_index": null}\n'
+            '[/ADD_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Erfasse den Wein", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert resp.status_code == 200
+        assert data["ok"] is True
+        assert data.get("wine_action") is not None
+        assert data["wine_action"]["name"] == "Chateau Test"
+        assert data["wine_action"]["year"] == 2020
+        assert data["wine_action"]["type"] == "Rotwein"
+        # ADD_WINE block should be stripped from response text
+        assert "[ADD_WINE]" not in data["response"]
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_add_wine_disabled_by_default(self, mock_opts, mock_chat, client):
+        """When edit_wines is not set, ADD_WINE blocks should be ignored."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'OK\n[ADD_WINE]\n{"name": "Test"}\n[/ADD_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Add wine"}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data.get("wine_action") is None
+        # Block is NOT stripped when edit_wines is off
+        assert "[ADD_WINE]" in data["response"]
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_add_wine_with_image(self, mock_opts, mock_chat, client):
+        """Wine added via chat should copy chat image to wine uploads."""
+        mock_opts.return_value = self.CHAT_OPTS
+
+        from io import BytesIO
+
+        # First message: upload an image
+        mock_chat.return_value = "Looks like a nice Barolo!"
+        resp1 = client.post(
+            "/api/chat",
+            data={
+                "message": "What wine is this?",
+                "image": (BytesIO(b'\xff\xd8\xff\xe0' + b'\x00' * 100), "label.jpg"),
+                "edit_wines": "true",
+            },
+            content_type="multipart/form-data",
+        )
+        data1 = json.loads(resp1.data)
+        session_id = data1["session_id"]
+
+        # Second message: add the wine, referencing image 1
+        mock_chat.return_value = (
+            'Erfasst!\n[ADD_WINE]\n'
+            '{"name": "Barolo Test", "year": 2018, "wine_type": "Rotwein", '
+            '"region": "Piemont", "grape": "Nebbiolo", "quantity": 2, '
+            '"rating": 5, "notes": "", "price": 45, '
+            '"image_index": 1}\n[/ADD_WINE]'
+        )
+        resp2 = client.post(
+            "/api/chat",
+            data=json.dumps({
+                "message": "Erfasse den Wein mit dem Foto",
+                "session_id": session_id,
+                "edit_wines": True,
+            }),
+            content_type="application/json",
+        )
+        data2 = json.loads(resp2.data)
+        assert data2["ok"] is True
+        assert data2["wine_action"] is not None
+        assert data2["wine_action"]["name"] == "Barolo Test"
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_add_wine_invalid_type_defaults(self, mock_opts, mock_chat, client):
+        """Invalid wine_type should default to 'Anderes'."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'OK\n[ADD_WINE]\n'
+            '{"name": "Mystery Wine", "wine_type": "InvalidType", "quantity": 1}\n'
+            '[/ADD_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Add it", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["wine_action"]["type"] == "Anderes"
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_add_wine_timeline_entry(self, mock_opts, mock_chat, client):
+        """Adding a wine via chat should create a timeline entry."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'Done!\n[ADD_WINE]\n'
+            '{"name": "Timeline Wine", "year": 2021, "wine_type": "Weisswein", "quantity": 3}\n'
+            '[/ADD_WINE]'
+        )
+
+        client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Add it", "edit_wines": True}),
+            content_type="application/json",
+        )
+
+        resp = client.get("/api/timeline")
+        data = json.loads(resp.data)
+        added_entries = [e for e in data["entries"] if e["action"] == "added" and e.get("wine_name") == "Timeline Wine"]
+        assert len(added_entries) == 1
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_edit_wine(self, mock_opts, mock_chat, client, sample_wine):
+        """Editing a wine via chat should update the DB."""
+        mock_opts.return_value = self.CHAT_OPTS
+        wine_id = sample_wine["wine"]["id"]
+
+        mock_chat.return_value = (
+            'Jahrgang aktualisiert!\n[EDIT_WINE]\n'
+            '{"id": ' + str(wine_id) + ', "year": 2019, "rating": 5}\n'
+            '[/EDIT_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Change year to 2019", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data["wine_action"]["action"] == "edited"
+        assert "[EDIT_WINE]" not in data["response"]
+
+        # Verify DB was updated
+        resp2 = client.get(f"/api/wine/{wine_id}")
+        wine = json.loads(resp2.data)["wine"]
+        assert wine["year"] == 2019
+        assert wine["rating"] == 5
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_edit_wine_quantity_creates_timeline(self, mock_opts, mock_chat, client, sample_wine):
+        """Editing quantity via chat should log consumed/restocked."""
+        mock_opts.return_value = self.CHAT_OPTS
+        wine_id = sample_wine["wine"]["id"]
+
+        mock_chat.return_value = (
+            'Menge aktualisiert!\n[EDIT_WINE]\n'
+            '{"id": ' + str(wine_id) + ', "quantity": 1}\n'
+            '[/EDIT_WINE]'
+        )
+
+        client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Set quantity to 1", "edit_wines": True}),
+            content_type="application/json",
+        )
+
+        resp = client.get("/api/timeline")
+        data = json.loads(resp.data)
+        consumed = [e for e in data["entries"] if e["action"] == "consumed"]
+        assert len(consumed) >= 1
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_edit_nonexistent_wine(self, mock_opts, mock_chat, client):
+        """Editing a nonexistent wine should not crash."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'OK\n[EDIT_WINE]\n{"id": 99999, "year": 2020}\n[/EDIT_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Edit it", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data.get("wine_action") is None
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_delete_wine(self, mock_opts, mock_chat, client, sample_wine):
+        """Deleting a wine via chat should remove it from DB."""
+        mock_opts.return_value = self.CHAT_OPTS
+        wine_id = sample_wine["wine"]["id"]
+
+        mock_chat.return_value = (
+            'Wein gelöscht!\n[DELETE_WINE]\n'
+            '{"id": ' + str(wine_id) + '}\n'
+            '[/DELETE_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Delete it", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data["wine_action"]["action"] == "deleted"
+        assert "[DELETE_WINE]" not in data["response"]
+
+        # Verify wine is gone
+        resp2 = client.get(f"/api/wine/{wine_id}")
+        assert resp2.status_code == 404
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_delete_creates_timeline(self, mock_opts, mock_chat, client, sample_wine):
+        """Deleting a wine via chat should create a timeline entry."""
+        mock_opts.return_value = self.CHAT_OPTS
+        wine_id = sample_wine["wine"]["id"]
+
+        mock_chat.return_value = (
+            'Gelöscht!\n[DELETE_WINE]\n{"id": ' + str(wine_id) + '}\n[/DELETE_WINE]'
+        )
+
+        client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Delete it", "edit_wines": True}),
+            content_type="application/json",
+        )
+
+        resp = client.get("/api/timeline")
+        data = json.loads(resp.data)
+        removed = [e for e in data["entries"] if e["action"] == "removed"]
+        assert len(removed) >= 1
+
+    @patch("app._call_chat")
+    @patch("app.load_options")
+    def test_chat_delete_nonexistent_wine(self, mock_opts, mock_chat, client):
+        """Deleting a nonexistent wine should not crash."""
+        mock_opts.return_value = self.CHAT_OPTS
+        mock_chat.return_value = (
+            'OK\n[DELETE_WINE]\n{"id": 99999}\n[/DELETE_WINE]'
+        )
+
+        resp = client.post(
+            "/api/chat",
+            data=json.dumps({"message": "Delete it", "edit_wines": True}),
+            content_type="application/json",
+        )
+        data = json.loads(resp.data)
+        assert data["ok"] is True
+        assert data.get("wine_action") is None
+
+
 # ── Maturity / Taste / Food Pairings ─────────────────────────────────────────
 
 class TestMaturityTasteFood:

@@ -1878,6 +1878,262 @@ def api_chat_session_detail(session_id):
 
 # ── AI Wine Chat ──────────────────────────────────────────────────────────────
 
+
+def _process_chat_add_wine(response_text, session_id, session_images, db):
+    """Parse [ADD_WINE] block from AI response, create the wine, copy the image."""
+    import json as _json
+    import re as _re
+    import shutil
+
+    match = _re.search(r'\[ADD_WINE\]\s*(\{.*?\})\s*\[/ADD_WINE\]', response_text, _re.DOTALL)
+    if not match:
+        return None
+    try:
+        data = _json.loads(match.group(1))
+    except (ValueError, _json.JSONDecodeError):
+        return None
+
+    name = (data.get("name") or "").strip()
+    if not name:
+        return None
+
+    # Validate wine type
+    wine_type = data.get("wine_type", "Anderes")
+    if wine_type not in WINE_TYPES:
+        wine_type = "Anderes"
+
+    # Handle image: copy from chat uploads to wine uploads
+    wine_image = None
+    image_index = data.get("image_index")
+    if image_index and session_images:
+        idx = int(image_index) - 1  # 0-based
+        if 0 <= idx < len(session_images):
+            src_path = os.path.join(UPLOAD_DIR, session_images[idx]["image_path"])
+            if os.path.isfile(src_path):
+                ext = os.path.splitext(src_path)[1] or ".jpg"
+                wine_image = uuid.uuid4().hex + ext
+                dst_path = os.path.join(UPLOAD_DIR, wine_image)
+                shutil.copy2(src_path, dst_path)
+
+    now = str(date.today())
+    year = data.get("year")
+    if year:
+        try:
+            year = int(year)
+        except (ValueError, TypeError):
+            year = None
+
+    price = data.get("price", 0)
+    try:
+        price = float(price) if price else 0
+    except (ValueError, TypeError):
+        price = 0
+
+    rating = data.get("rating", 0)
+    try:
+        rating = int(rating) if rating else 0
+        rating = max(0, min(5, rating))
+    except (ValueError, TypeError):
+        rating = 0
+
+    quantity = data.get("quantity", 1)
+    try:
+        quantity = int(quantity) if quantity else 1
+    except (ValueError, TypeError):
+        quantity = 1
+
+    drink_from = data.get("drink_from")
+    drink_until = data.get("drink_until")
+    try:
+        drink_from = int(drink_from) if drink_from else None
+    except (ValueError, TypeError):
+        drink_from = None
+    try:
+        drink_until = int(drink_until) if drink_until else None
+    except (ValueError, TypeError):
+        drink_until = None
+
+    db.execute(
+        """INSERT INTO wines
+           (name, year, type, region, quantity, rating, notes, image, added,
+            purchased_at, price, drink_from, drink_until, location, grape, vivino_id, bottle_format)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            name,
+            year,
+            wine_type,
+            data.get("region", ""),
+            quantity,
+            rating,
+            data.get("notes", ""),
+            wine_image,
+            now,
+            data.get("purchased_at", ""),
+            price,
+            drink_from,
+            drink_until,
+            data.get("location", ""),
+            data.get("grape", ""),
+            None,  # vivino_id
+            0.75,  # bottle_format
+        ),
+    )
+    db.commit()
+    wine_id = db.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+    # Log to timeline
+    db.execute(
+        "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+        (wine_id, "added", quantity, datetime.now().isoformat()),
+    )
+    db.commit()
+
+    return {"action": "added", "id": wine_id, "name": name, "year": year, "type": wine_type}
+
+
+def _process_chat_edit_wine(response_text, db):
+    """Parse [EDIT_WINE] block from AI response, update the wine in DB."""
+    import json as _json
+    import re as _re
+
+    match = _re.search(r'\[EDIT_WINE\]\s*(\{.*?\})\s*\[/EDIT_WINE\]', response_text, _re.DOTALL)
+    if not match:
+        return None
+    try:
+        data = _json.loads(match.group(1))
+    except (ValueError, _json.JSONDecodeError):
+        return None
+
+    wine_id = data.get("id")
+    if not wine_id:
+        return None
+    try:
+        wine_id = int(wine_id)
+    except (ValueError, TypeError):
+        return None
+
+    wine = db.execute("SELECT * FROM wines WHERE id = ?", (wine_id,)).fetchone()
+    if not wine:
+        return None
+
+    # Build update fields - only update what's provided
+    updates = {}
+    field_map = {
+        "name": str, "region": str, "grape": str, "notes": str,
+        "location": str, "purchased_at": str,
+    }
+    for field, cast in field_map.items():
+        if field in data and data[field] is not None:
+            updates[field] = cast(data[field])
+
+    if "year" in data:
+        try:
+            updates["year"] = int(data["year"]) if data["year"] else None
+        except (ValueError, TypeError):
+            pass
+    if "wine_type" in data:
+        wt = data["wine_type"]
+        if wt in WINE_TYPES:
+            updates["type"] = wt
+    if "quantity" in data:
+        try:
+            new_qty = int(data["quantity"])
+            old_qty = wine["quantity"] or 0
+            updates["quantity"] = new_qty
+            # Log quantity changes
+            if new_qty < old_qty:
+                db.execute(
+                    "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+                    (wine_id, "consumed", old_qty - new_qty, datetime.now().isoformat()),
+                )
+            elif new_qty > old_qty:
+                db.execute(
+                    "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+                    (wine_id, "restocked", new_qty - old_qty, datetime.now().isoformat()),
+                )
+        except (ValueError, TypeError):
+            pass
+    if "rating" in data:
+        try:
+            updates["rating"] = max(0, min(5, int(data["rating"])))
+        except (ValueError, TypeError):
+            pass
+    if "price" in data:
+        try:
+            updates["price"] = float(data["price"]) if data["price"] else 0
+        except (ValueError, TypeError):
+            pass
+    for df in ("drink_from", "drink_until"):
+        if df in data:
+            try:
+                updates[df] = int(data[df]) if data[df] else None
+            except (ValueError, TypeError):
+                pass
+
+    if not updates:
+        return None
+
+    set_clause = ", ".join(f"{k} = ?" for k in updates)
+    values = list(updates.values()) + [wine_id]
+    db.execute(f"UPDATE wines SET {set_clause} WHERE id = ?", values)
+    db.commit()
+
+    return {
+        "action": "edited",
+        "id": wine_id,
+        "name": updates.get("name", wine["name"]),
+        "year": updates.get("year", wine["year"]),
+        "fields": list(updates.keys()),
+    }
+
+
+def _process_chat_delete_wine(response_text, db):
+    """Parse [DELETE_WINE] block from AI response, delete the wine from DB."""
+    import json as _json
+    import re as _re
+
+    match = _re.search(r'\[DELETE_WINE\]\s*(\{.*?\})\s*\[/DELETE_WINE\]', response_text, _re.DOTALL)
+    if not match:
+        return None
+    try:
+        data = _json.loads(match.group(1))
+    except (ValueError, _json.JSONDecodeError):
+        return None
+
+    wine_id = data.get("id")
+    if not wine_id:
+        return None
+    try:
+        wine_id = int(wine_id)
+    except (ValueError, TypeError):
+        return None
+
+    wine = db.execute("SELECT * FROM wines WHERE id = ?", (wine_id,)).fetchone()
+    if not wine:
+        return None
+
+    wine_name = wine["name"]
+    wine_year = wine["year"]
+    wine_qty = wine["quantity"] or 0
+
+    # Delete wine image if exists
+    if wine["image"]:
+        img_path = os.path.join(UPLOAD_DIR, wine["image"])
+        if os.path.isfile(img_path):
+            os.remove(img_path)
+
+    db.execute("DELETE FROM wines WHERE id = ?", (wine_id,))
+    # Log to timeline
+    if wine_qty > 0:
+        db.execute(
+            "INSERT INTO timeline (wine_id, action, quantity, timestamp) VALUES (?, ?, ?, ?)",
+            (wine_id, "removed", wine_qty, datetime.now().isoformat()),
+        )
+    db.commit()
+
+    return {"action": "deleted", "id": wine_id, "name": wine_name, "year": wine_year}
+
+
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
     """Wine sommelier chat – AI answers questions about the user's wine cellar."""
@@ -1889,6 +2145,7 @@ def api_chat():
     # Support both JSON and multipart/form-data (for image uploads)
     image_b64 = None
     media_type = None
+    edit_wines = False
     if request.content_type and "multipart/form-data" in request.content_type:
         user_message = (request.form.get("message") or "").strip()
         import json as _json
@@ -1896,6 +2153,7 @@ def api_chat():
         session_id = request.form.get("session_id", type=int)
         save_raw = request.form.get("save", "true")
         save = save_raw.lower() != "false"
+        edit_wines = request.form.get("edit_wines", "false").lower() == "true"
         # Process uploaded image
         img_file = request.files.get("image")
         if img_file and img_file.filename and allowed(img_file.filename):
@@ -1906,12 +2164,14 @@ def api_chat():
         history = body.get("history") or []
         session_id = body.get("session_id")
         save = body.get("save", True)
+        edit_wines = body.get("edit_wines", False)
 
     if not user_message:
         return jsonify({"ok": False, "error": "empty_message"}), 400
 
     db = get_db()
     now = datetime.now().isoformat()
+    saved_image_path = None
 
     if save:
         # Auto-create session if none provided
@@ -2012,11 +2272,96 @@ def api_chat():
         f"- Only use wine: links for wines that exist in the cellar with an ID; for purchase suggestions use plain text"
     )
 
+    # Extend system prompt with wine editing capabilities
+    if edit_wines and not (AUTH_ENABLED and session.get("role") == "readonly"):
+        # List images uploaded in this chat session
+        session_images = []
+        if session_id:
+            img_rows = db.execute(
+                "SELECT id, image_path, content FROM chat_messages "
+                "WHERE session_id = ? AND image_path IS NOT NULL ORDER BY id",
+                (session_id,),
+            ).fetchall()
+            for idx, row in enumerate(img_rows, 1):
+                session_images.append({
+                    "index": idx,
+                    "image_path": row["image_path"],
+                    "context": (row["content"] or "")[:80],
+                })
+        # Also count the current upload as the next image
+        if image_b64 and saved_image_path:
+            session_images.append({
+                "index": len(session_images) + 1,
+                "image_path": saved_image_path,
+                "context": user_message[:80],
+            })
+
+        images_info = ""
+        if session_images:
+            img_lines = []
+            for img in session_images:
+                img_lines.append(f"  Image {img['index']}: {img['image_path']} (context: {img['context']})")
+            images_info = (
+                f"\n\nImages uploaded in this conversation:\n"
+                + "\n".join(img_lines)
+            )
+
+        system_prompt += (
+            f"\n\n--- WINE EDITING MODE ---\n"
+            f"The user has enabled wine editing. You can ADD, EDIT, and DELETE wines in the cellar.\n"
+            f"When the user asks you to manage wines, output the appropriate action block.\n\n"
+            f"GENERAL RULES:\n"
+            f"- ALWAYS confirm with the user before ANY action — show them the details and ask for confirmation\n"
+            f"- Only output action blocks AFTER the user has confirmed\n"
+            f"- wine_type MUST be one of: Rotwein, Weisswein, Rosé, Schaumwein, Dessertwein, Likörwein, Anderes\n"
+            f"- You can only perform ONE action per message\n\n"
+            f"=== ADD WINE ===\n"
+            f"Fill in as many fields as possible from the conversation and label photos.\n"
+            f"If multiple images were uploaded, ask the user which image to use.\n"
+            f"[ADD_WINE]\n"
+            f'{{"name": "Wine Name", "year": 2020, "wine_type": "Rotwein", "region": "Region, Country", '
+            f'"grape": "Grape Variety", "quantity": 1, "rating": 0, "notes": "Tasting notes", '
+            f'"price": 0, "drink_from": null, "drink_until": null, "location": "", '
+            f'"image_index": 1}}\n'
+            f"[/ADD_WINE]\n"
+            f"- image_index: which uploaded image to use (1-based), or null for no image\n\n"
+            f"=== EDIT WINE ===\n"
+            f"Use the wine ID from [ID:...] in the cellar data. Only include fields that should change.\n"
+            f"[EDIT_WINE]\n"
+            f'{{"id": 42, "year": 2021, "quantity": 3, "rating": 4}}\n'
+            f"[/EDIT_WINE]\n"
+            f"- Supported fields: name, year, wine_type, region, grape, quantity, rating, notes, price, drink_from, drink_until, location, purchased_at\n\n"
+            f"=== DELETE WINE ===\n"
+            f"Use the wine ID from [ID:...] in the cellar data. Be VERY careful — always double-confirm deletion.\n"
+            f"[DELETE_WINE]\n"
+            f'{{"id": 42}}\n'
+            f"[/DELETE_WINE]"
+            f"{images_info}"
+        )
+
     messages = valid_history + [{"role": "user", "content": user_message}]
 
     try:
         response_text = _call_chat(provider, messages, system_prompt, opts,
                                     image_b64=image_b64, media_type=media_type)
+
+        # Check if AI wants to perform wine actions
+        wine_action = None
+        if edit_wines:
+            import re as _re
+            if "[ADD_WINE]" in response_text and "[/ADD_WINE]" in response_text:
+                wine_action = _process_chat_add_wine(
+                    response_text, session_id, session_images, db
+                )
+            elif "[EDIT_WINE]" in response_text and "[/EDIT_WINE]" in response_text:
+                wine_action = _process_chat_edit_wine(response_text, db)
+            elif "[DELETE_WINE]" in response_text and "[/DELETE_WINE]" in response_text:
+                wine_action = _process_chat_delete_wine(response_text, db)
+
+            # Remove any action blocks from the displayed response
+            response_text = _re.sub(
+                r'\[(ADD|EDIT|DELETE)_WINE\].*?\[/\1_WINE\]', '', response_text, flags=_re.DOTALL
+            ).strip()
 
         if save:
             # Save assistant response to DB
@@ -2034,6 +2379,8 @@ def api_chat():
         result = {"ok": True, "response": response_text}
         if save and session_id:
             result["session_id"] = session_id
+        if wine_action:
+            result["wine_action"] = wine_action
         return jsonify(result)
     except Exception as e:
         app.logger.exception("Chat error: %s", e)

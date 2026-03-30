@@ -316,6 +316,7 @@ function sendChatMessage() {
   var T = window.T || {};
   var chatRecOn = _isChatRecordingEnabled();
 
+  var editWines = localStorage.getItem('chatEditWines') === '1';
   var fetchOpts = {method: 'POST'};
   if (_chatImageFile) {
     var fd = new FormData();
@@ -323,6 +324,7 @@ function sendChatMessage() {
     fd.append('image', _chatImageFile);
     if (chatRecOn && _chatSessionId) fd.append('session_id', _chatSessionId);
     if (!chatRecOn) fd.append('save', 'false');
+    if (editWines) fd.append('edit_wines', 'true');
     fetchOpts.body = fd;
     removeChatImage();
   } else {
@@ -333,6 +335,7 @@ function sendChatMessage() {
     if (!chatRecOn) {
       payload.save = false;
     }
+    if (editWines) payload.edit_wines = true;
     fetchOpts.headers = {'Content-Type': 'application/json'};
     fetchOpts.body = JSON.stringify(payload);
   }
@@ -346,6 +349,29 @@ function sendChatMessage() {
       // Track the session ID returned by the server (only when recording)
       if (data.session_id && _isChatRecordingEnabled()) {
         _chatSessionId = data.session_id;
+      }
+      // Show wine action confirmation
+      if (data.wine_action) {
+        var w = data.wine_action;
+        var label = w.name + (w.year ? ' ' + w.year : '');
+        var icon = 'mdi-check-circle';
+        var msg = T.chat_wine_added || 'added to cellar';
+        var cssClass = 'chat-wine-added';
+        if (w.action === 'edited') {
+          msg = T.chat_wine_edited || 'updated';
+        } else if (w.action === 'deleted') {
+          icon = 'mdi-delete-check';
+          msg = T.chat_wine_deleted || 'removed from cellar';
+          cssClass = 'chat-wine-deleted';
+        }
+        var linkHtml = w.action === 'deleted'
+          ? escapeHtmlChat(label)
+          : '<a href="wine:' + w.id + '">' + escapeHtmlChat(label) + '</a>';
+        appendChatMessage('assistant',
+          '<div class="' + cssClass + '">'
+          + '<i class="mdi ' + icon + '"></i> '
+          + linkHtml + ' ' + msg
+          + '</div>', true);
       }
     } else {
       appendChatMessage('assistant', T.chat_error || 'Error getting response. Please try again.');
