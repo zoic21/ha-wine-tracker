@@ -49,7 +49,7 @@ else
   error "Invalid version format: $VERSION (expected vX.Y.Z)"
 fi
 
-CURRENT_VERSION=$(grep -oP 'version:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' wine-tracker/config.yaml)
+CURRENT_VERSION=$(sed -n 's/^version: "\([0-9]*\.[0-9]*\.[0-9]*\)"/\1/p' wine-tracker/config.yaml)
 info "Current version: ${CURRENT_VERSION}"
 info "New version:     ${SEMVER} (tag: ${TAG})"
 echo ""
@@ -138,12 +138,12 @@ ${COMMITS}
 
 Rules:
 - Write from the user's perspective, NOT technical (no code, no frameworks, no database internals)
-- Each entry starts with '- **Title** — description' (use bold title, em dash, then explanation)
+- Each entry starts with '- **Title** - description' (use bold title, hyphen, then explanation)
 - Max 5-8 entries total, consolidate if needed
 - No duplicates, no trivial changes (e.g. .gitignore, lint fixes)
 - No introductory text, just the list of entries
 - Do NOT include a heading — just the bullet points
-- Example good entry: '- **Bottle format support** — track different wine bottle sizes from Piccolo to Nebuchadnezzar with a new dropdown in the wine form'
+- Example good entry: '- **Bottle format support** - track different wine bottle sizes from Piccolo to Nebuchadnezzar with a new dropdown in the wine form'
 - Example bad entry: '- Fix TypeScript types in allocation reducer'"
 
   CHANGELOG_BODY=$(echo "$PROMPT" | claude --print 2>/dev/null || echo "")
