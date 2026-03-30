@@ -1,4 +1,4 @@
-# Wine Tracker – Home Assistant Add-on & Docker Standalone
+# Wine Tracker - Home Assistant Add-on & Docker Standalone
 
 <p align="center">
   <img src="logo.png" alt="Wine Tracker Logo" width="128">
@@ -19,7 +19,7 @@
 ![last commit][commit-badge]
 ![commit activity][activity-badge]
 
-A sleek, modern wine cellar tracker. Run it as a **Home Assistant add-on** or as a **standalone Docker container** — manage your entire collection from label photo to tasting notes.
+A sleek, modern wine cellar tracker. Run it as a **Home Assistant add-on** or as a **standalone Docker container** - manage your entire collection from label photo to tasting notes.
 
 ## Screenshots
 
@@ -30,44 +30,56 @@ A sleek, modern wine cellar tracker. Run it as a **Home Assistant add-on** or as
   <img src="assets/260220_statistics_screen.png" alt="Statistics with Globe & Charts" width="800">
 </p>
 <p align="center">
-  <img src="assets/260220_add_wine_screen.png" alt="Add Wine — AI, Vivino or Manual" width="800">
+  <img src="assets/260220_add_wine_screen.png" alt="Add Wine - AI, Vivino or Manual" width="800">
   <img src="assets/260220_wine_edit_screen.png" alt="Edit Wine Details" width="800">
 </p>
 
 ## Features
 
+### Wine Management
+
 - **Wine cards** with photo, vintage, type, region, grape variety, rating & notes
-- **Photo upload** — snap a label photo from your phone
-- **AI wine label recognition** — snap a label photo and let AI fill in all fields (supports 4 AI providers)
-- **Vivino wine search** — search by name, see ratings, region & price, and import directly
-- **Vivino ID management** — view, edit & test Vivino wine links directly in the edit modal
-- **Reload missing data** — re-analyze wines with incomplete fields via AI or Vivino
-- **Star rating** (1–5 stars)
-- **Quick quantity buttons** (+/−) directly on the card
-- **Duplicate wines** — perfect when only the vintage changes
-- **Bottle format** — track bottle sizes from Piccolo (0.1875l) to Nebuchadnezzar (15l), auto-detected by AI from label photos
+- **Photo upload** - snap a label photo from your phone
+- **Star rating** (1-5 stars)
+- **Quick quantity buttons** (+/-)  directly on the card
+- **Duplicate wines** - perfect when only the vintage changes
+- **Bottle format** - track sizes from Piccolo (0.1875l) to Nebuchadnezzar (15l)
 - **Empty bottles** stay visible as placeholders (toggle to hide)
-- **Search & filter** by wine type
 - **Drink window** (from/until year)
 - **Purchase price** with configurable currency
 - **Storage location** with autocomplete from existing entries
 - **Region & purchase source** autocomplete from existing entries
 - **Grape variety** (e.g. Merlot, Pinot Noir, Chardonnay) with autocomplete
-- **Cellar view modes** — switch between Cards, List, Grid, and Table view in settings
-- **Sortable table view** — sort by any column with persistent sort direction; responsive column hiding on smaller screens
-- **Activity timeline** — chronological log of wines added, consumed, restocked, or removed, grouped by month
-- **AI sommelier chat** — ask your personal sommelier questions about your cellar, with persistent chat history
-- **Maturity graph** — AI-generated bell curve showing drinking phases (Youth, Maturity, Peak, Decline)
-- **Taste profile & food pairings** — AI-generated body/tannin/acidity/sweetness bars and matching dish suggestions
-- **Interactive globe** — see your wine regions on a 3D globe (COBE)
-- **Statistics** — donut charts, total bottles, total liters, value overview & average age
-- **6 themes** — each with dark & light mode, switchable in settings
-- **Hamburger menu** — navigation collapses on narrow viewports
-- **Multi-language** — 7 languages supported
-- **DEV_AUTH mode** — `DEV_AUTH` env var for quick local development without Home Assistant
-- **HA Ingress** — embedded directly in the Home Assistant sidebar
+
+### AI & Integrations
+
+- **AI label recognition** - snap a label photo and let AI fill in all fields (Anthropic, OpenAI, OpenRouter, Ollama)
+- **Vivino wine search** - search by name, see ratings, region & price, and import directly
+- **Vivino ID management** - view, edit & test Vivino wine links directly in the edit modal
+- **Reload missing data** - re-analyze wines with incomplete fields via AI or Vivino
+- **AI sommelier chat** - ask questions about your cellar, upload wine label photos, with persistent chat history
+- **Maturity graph** - AI-generated bell curve showing drinking phases (Youth, Maturity, Peak, Decline)
+- **Taste profile & food pairings** - AI-generated body/tannin/acidity/sweetness bars and matching dish suggestions
+
+### Views & Statistics
+
+- **Cellar view modes** - switch between Cards, List, Grid, and Table view
+- **Sortable table view** - sort by any column with persistent sort direction
+- **Search & filter** by wine type, vintage & grape variety
+- **Activity timeline** - chronological log of wines added, consumed, restocked, or removed
+- **Interactive globe** - see your wine regions on a 3D globe (COBE)
+- **Stock history chart** - area chart showing bottle count development over the last 6 months
+- **Statistics** - donut charts, total bottles, total liters, value overview & average age
+
+### UI & Platform
+
+- **6 themes** - each with dark & light mode, switchable in settings
+- **Hamburger menu** - navigation collapses on narrow viewports
+- **Fully responsive** - works great on desktop & mobile
+- **Multi-language** - 7 languages (DE, EN, FR, IT, ES, PT, NL)
+- **HA Ingress** - embedded directly in the Home Assistant sidebar
 - **REST API** at `/api/summary` for HA sensors
-- **Fully responsive** — works great on desktop & mobile
+- **DEV_AUTH mode** - `DEV_AUTH` env var for quick local development without Home Assistant
 
 ## Supported Languages
 
@@ -85,7 +97,7 @@ Set your preferred language in the add-on configuration (`language` option).
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-## Installation — Home Assistant Add-on
+## Installation - Home Assistant Add-on
 
 [![Add Repository to My Home Assistant][my-ha-badge]][my-ha-url]
 
@@ -99,7 +111,7 @@ Or install manually:
 
 The add-on opens in the HA sidebar under **Wine Tracker**.
 
-## Installation — Docker Standalone
+## Installation - Docker Standalone
 
 Run Wine Tracker without Home Assistant using Docker Compose.
 
@@ -145,7 +157,7 @@ docker-compose up -d
 |----------|---------|-------------|
 | `AUTH_ENABLED` | `false` | Enable login (`true` / `false`) |
 | `USERS` | _(empty)_ | User list (see format below) |
-| `SECRET_KEY` | _(random)_ | Session encryption key — set a fixed value for persistence across restarts |
+| `SECRET_KEY` | _(random)_ | Session encryption key - set a fixed value for persistence across restarts |
 
 **User format:** `user1:password1,user2:password2,guest:password3:readonly`
 
@@ -157,10 +169,10 @@ docker-compose up -d
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `CURRENCY` | `CHF` | Currency symbol — `CHF`, `EUR`, `USD`, `GBP`, `CAD`, `AUD` |
-| `LANGUAGE` | `de` | UI language — `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
+| `CURRENCY` | `CHF` | Currency symbol - `CHF`, `EUR`, `USD`, `GBP`, `CAD`, `AUD` |
+| `LANGUAGE` | `de` | UI language - `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
 
-#### AI Provider (optional — pick one)
+#### AI Provider (optional - pick one)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -216,7 +228,7 @@ All options are configured via the Home Assistant add-on configuration page.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `currency` | string | `CHF` | Currency symbol displayed for prices (e.g. `EUR`, `USD`, `GBP`) |
-| `language` | string | `de` | UI language — one of: `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
+| `language` | string | `de` | UI language - one of: `de`, `en`, `fr`, `it`, `es`, `pt`, `nl` |
 
 ### AI Wine Label Recognition
 
@@ -235,29 +247,29 @@ The AI feature lets you snap a photo of a wine label and automatically fills in 
 | `ollama_model` | string | `llava` | Ollama vision model name |
 
 **Provider notes:**
-- **Anthropic** — uses the Claude API directly. Requires an API key from [console.anthropic.com](https://console.anthropic.com)
-- **OpenAI** — uses the OpenAI API. Requires an API key from [platform.openai.com](https://platform.openai.com)
-- **OpenRouter** — a unified API that routes to many models. Requires an API key from [openrouter.ai](https://openrouter.ai). You can choose any vision-capable model.
-- **Ollama** — runs fully local, no API key needed. Install [Ollama](https://ollama.com) and pull a vision model (e.g. `llava`). Set the host to your Ollama server address.
+- **Anthropic** - uses the Claude API directly. Requires an API key from [console.anthropic.com](https://console.anthropic.com)
+- **OpenAI** - uses the OpenAI API. Requires an API key from [platform.openai.com](https://platform.openai.com)
+- **OpenRouter** - a unified API that routes to many models. Requires an API key from [openrouter.ai](https://openrouter.ai). You can choose any vision-capable model.
+- **Ollama** - runs fully local, no API key needed. Install [Ollama](https://ollama.com) and pull a vision model (e.g. `llava`). Set the host to your Ollama server address.
 
 **Estimated token cost per wine analysis** (~2,500 tokens):
 
 | Provider | Model | Cost / Request |
 |----------|-------|----------------|
 | OpenAI | GPT-4o-mini | ~$0.001 |
-| OpenAI | GPT-4o | ~$0.005–0.01 |
+| OpenAI | GPT-4o | ~$0.005-0.01 |
 | OpenAI | GPT-4.1 | ~$0.01 |
-| OpenAI | o3 / o4-mini | ~$0.02–0.05 |
+| OpenAI | o3 / o4-mini | ~$0.02-0.05 |
 | Anthropic | Claude Haiku | ~$0.002 |
 | Anthropic | Claude Sonnet | ~$0.01 |
-| Anthropic | Claude Opus | ~$0.05–0.08 |
+| Anthropic | Claude Opus | ~$0.05-0.08 |
 | Ollama | Local models | Free |
 
 > **Example:** Analyzing 100 wines costs roughly $0.10 with GPT-4o-mini, $1.00 with Claude Sonnet, or $0.00 with Ollama.
 
 ## Data Persistence (Home Assistant)
 
-All data (SQLite database + photos) is stored under `/share/wine-tracker/` — preserved across add-on updates, restarts, and HA updates.
+All data (SQLite database + photos) is stored under `/share/wine-tracker/` - preserved across add-on updates, restarts, and HA updates.
 
 ## Home Assistant Sensor (Optional)
 
@@ -286,7 +298,7 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 | `region` | Text | Origin (e.g. Piemont, IT) |
 | `grape` | Text | Grape variety (e.g. Merlot, Pinot Noir) |
 | `quantity` | Integer | Number of bottles (0 = placeholder) |
-| `rating` | Integer | 1–5 stars |
+| `rating` | Integer | 1-5 stars |
 | `notes` | Text | Free text |
 | `image` | Text | Label photo filename |
 | `added` | Date | Date added |
@@ -309,31 +321,31 @@ This creates a `sensor.wine_stock` entity you can use on dashboards or in automa
 
 ## Roadmap
 
-> Features are listed roughly by priority — not all will ship, and order may change.
+> Features are listed roughly by priority - not all will ship, and order may change.
 
 ### 🔜 Up Next
-- **Export / Import** — CSV & JSON export of your full collection; import to restore or migrate
-- **Spending trends** — visualize spending by month, region, or wine type
-- **Maturity calendar** — overview of which wines become drinkable each year
+- **Export / Import** - CSV & JSON export of your full collection; import to restore or migrate
+- **Spending trends** - visualize spending by month, region, or wine type
+- **Maturity calendar** - overview of which wines become drinkable each year
 
 ### 🏠 Home Assistant Integration
-- **Drink window notifications** — HA alerts when wines enter or leave their optimal window
-- **Extended REST API** — more endpoints (single wine, stats, collection export) for dashboards & automations
-- **HA Dashboard card** — native Lovelace card to embed wine stats on any dashboard
+- **Drink window notifications** - HA alerts when wines enter or leave their optimal window
+- **Extended REST API** - more endpoints (single wine, stats, collection export) for dashboards & automations
+- **HA Dashboard card** - native Lovelace card to embed wine stats on any dashboard
 
 ### 🎨 UI & Personalization
-- **Keyboard shortcuts** — `/` to search, `+` to add, `Esc` to close modals
-- **Wishlist mode** — mark wines you want to buy (separate from owned bottles)
+- **Keyboard shortcuts** - `/` to search, `+` to add, `Esc` to close modals
+- **Wishlist mode** - mark wines you want to buy (separate from owned bottles)
 
 ### 📦 Platform & Data
-- **Tags & custom categories** — label wines as "gift", "special occasion", "everyday", etc.
-- **Bulk editing** — select multiple wines and change location, type, or category at once
-- **Multiple cellars** — manage separate collections (home, vacation house, office)
+- **Tags & custom categories** - label wines as "gift", "special occasion", "everyday", etc.
+- **Bulk editing** - select multiple wines and change location, type, or category at once
+- **Multiple cellars** - manage separate collections (home, vacation house, office)
 
 ### 📱 Mobile & Sharing
-- **PWA support** — install on your phone's home screen with offline access
-- **Barcode / QR scan** — scan a wine barcode to auto-lookup via Vivino
-- **Shareable collection link** — generate a read-only link or QR code for friends
+- **PWA support** - install on your phone's home screen with offline access
+- **Barcode / QR scan** - scan a wine barcode to auto-lookup via Vivino
+- **Shareable collection link** - generate a read-only link or QR code for friends
 
 ## License
 
@@ -346,7 +358,7 @@ MIT
 [languages-badge]: https://img.shields.io/badge/languages-7-blue.svg
 [ha-badge]: https://img.shields.io/badge/Home%20Assistant-Add--on-41BDF5.svg?logo=homeassistant&logoColor=white
 [ai-badge]: https://img.shields.io/badge/AI%20powered-label%20recognition-blueviolet.svg
-[arch-badge]: https://img.shields.io/badge/arch-aarch64%20|%20amd64%20|%20armhf%20|%20armv7-informational.svg
+[arch-badge]: https://img.shields.io/badge/arch-aarch64-informational.svg
 [stars-badge]: https://img.shields.io/github/stars/xenofex7/ha-wine-tracker?style=flat&logo=github
 [issues-badge]: https://img.shields.io/github/issues/xenofex7/ha-wine-tracker?style=flat&logo=github
 [commit-badge]: https://img.shields.io/github/last-commit/xenofex7/ha-wine-tracker?style=flat&logo=github

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wine Tracker — Your Personal Wine Cellar, Beautifully Organized</title>
+  <title>Wine Tracker - Your Personal Wine Cellar, Beautifully Organized</title>
   <meta name="description" content="Track your wine collection with AI-powered label recognition, Vivino integration, and a stunning 3D globe. Run as a Home Assistant add-on or standalone Docker container.">
   <meta name="keywords" content="wine tracker, wine cellar, wine collection, home assistant, docker, AI label recognition, vivino, wine management, sommelier, wine statistics, wine globe">
   <meta name="author" content="xenofex7">
@@ -12,7 +12,7 @@
   <meta name="theme-color" content="#009ac7">
   <meta name="color-scheme" content="dark light">
   <link rel="canonical" href="https://xenofex7.github.io/ha-wine-tracker/">
-  <meta property="og:title" content="Wine Tracker — Your Personal Wine Cellar">
+  <meta property="og:title" content="Wine Tracker - Your Personal Wine Cellar">
   <meta property="og:description" content="Track your wine collection with AI-powered label recognition, Vivino integration, and a stunning 3D globe.">
   <meta property="og:image" content="https://raw.githubusercontent.com/xenofex7/ha-wine-tracker/main/assets/260220_main_screen.png">
   <meta property="og:image:width" content="1280">
@@ -23,7 +23,7 @@
   <meta property="og:site_name" content="Wine Tracker">
   <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Wine Tracker — Your Personal Wine Cellar">
+  <meta name="twitter:title" content="Wine Tracker - Your Personal Wine Cellar">
   <meta name="twitter:description" content="Track your wine collection with AI-powered label recognition, Vivino integration, and a stunning 3D globe.">
   <meta name="twitter:image" content="https://raw.githubusercontent.com/xenofex7/ha-wine-tracker/main/assets/260220_main_screen.png">
   <meta name="twitter:image:alt" content="Wine Tracker main screen showing wine cellar overview with cards">
@@ -60,13 +60,15 @@
       "AI-powered wine label recognition",
       "Vivino search integration",
       "Interactive 3D globe visualization",
-      "Wine collection statistics and charts",
-      "AI sommelier for food pairings",
+      "Wine collection statistics and stock history chart",
+      "AI sommelier with image upload for food pairings",
       "7 language support",
       "Docker standalone deployment",
       "Home Assistant add-on",
       "User authentication",
-      "Star ratings and tasting notes"
+      "Star ratings and tasting notes",
+      "Activity timeline",
+      "Maturity graph and taste profiles"
     ],
     "softwareRequirements": "Docker or Home Assistant",
     "codeRepository": "https://github.com/xenofex7/ha-wine-tracker",
@@ -80,7 +82,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* ========================================
-       CSS Custom Properties — Dark (default)
+       CSS Custom Properties - Dark (default)
        ======================================== */
     :root {
       --bg-primary: #111111;
@@ -1379,11 +1381,11 @@
         <div class="why-card fade-in">
           <svg class="why-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg>
           <h3>Local First</h3>
-          <p>Everything runs on your Home Assistant or Docker. No cloud, no subscription, no data sharing. Your wine cellar stays yours — always.</p>
+          <p>Everything runs on your Home Assistant or Docker. No cloud, no subscription, no data sharing. Your wine cellar stays yours - always.</p>
         </div>
         <div class="why-card fade-in fade-in-delay-1">
           <svg class="why-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 008.5 14.063l-6.135-1.582a.5.5 0 010-.962L8.5 9.936A2 2 0 009.937 8.5l1.582-6.135a.5.5 0 01.962 0L14.063 8.5A2 2 0 0015.5 9.937l6.135 1.582a.5.5 0 010 .962L15.5 14.063a2 2 0 00-1.437 1.437l-1.582 6.135a.5.5 0 01-.962 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
-          <h3>AI — Optional &amp; Affordable</h3>
+          <h3>AI - Optional &amp; Affordable</h3>
           <p>Snap a label photo → AI fills in everything. Choose your provider: OpenAI, Anthropic, or Ollama (free, local). Analyzing 100 wines costs less than $0.10 with GPT-4o-mini.</p>
         </div>
         <div class="why-card fade-in fade-in-delay-2">
@@ -1464,14 +1466,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
           </span>
           <h3>Statistics</h3>
-          <p>Donut charts by type, total bottles, total liters, collection value, and average age - all at a glance.</p>
+          <p>Donut charts, stock history, total bottles, total liters, collection value, and average age - all at a glance.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-1">
           <span class="feature-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 10h.01"/><path d="M12 10h.01"/><path d="M16 10h.01"/></svg>
           </span>
           <h3>AI Sommelier</h3>
-          <p>Ask for food pairings, serving temperature, and recommendations based on your collection and preferences.</p>
+          <p>Ask for food pairings, serving temperature, and recommendations. Upload wine label photos directly in the chat.</p>
         </div>
         <div class="feature-card fade-in fade-in-delay-2">
           <span class="feature-icon" aria-hidden="true">
@@ -1638,7 +1640,7 @@
        ======================================== -->
   <script>
     // ========================================
-    // Theme toggle — light / dark
+    // Theme toggle - light / dark
     // ========================================
     (function initTheme() {
       var saved = localStorage.getItem('wt-theme');

@@ -1,4 +1,4 @@
-# Wine Tracker — Style Guide
+# Wine Tracker - Style Guide
 
 Reference for consistent UI development. All values are derived from `wine-tracker/app/static/style.css`.
 
@@ -138,17 +138,17 @@ The design uses rem-based spacing. Common increments:
 
 | Size | Value | Use |
 |------|-------|-----|
-| xs | `.15rem` – `.25rem` | Tight gaps (star icons, filter list, tag padding) |
-| sm | `.35rem` – `.5rem` | Label margins, small paddings, card body gaps |
-| md | `.6rem` – `.75rem` | Input padding, section gaps, card body padding |
-| lg | `1rem` – `1.25rem` | Modal body padding, grid gap, section spacing |
+| xs | `.15rem` - `.25rem` | Tight gaps (star icons, filter list, tag padding) |
+| sm | `.35rem` - `.5rem` | Label margins, small paddings, card body gaps |
+| md | `.6rem` - `.75rem` | Input padding, section gaps, card body padding |
+| lg | `1rem` - `1.25rem` | Modal body padding, grid gap, section spacing |
 | xl | `1.5rem` | Page padding, panel padding, section margins |
-| xxl | `2rem` – `3rem` | Upload area padding, empty state padding |
+| xxl | `2rem` - `3rem` | Upload area padding, empty state padding |
 
 ### Consistent Patterns
 - **Grid gap**: `1rem`
 - **Card body padding**: `.75rem 1rem`
-- **Modal inner padding**: **`1.25rem` (20px) — mandatory for ALL content areas inside modals** (`.modal-body`, `.source-step`, `.ai-step`, `.vivino-panel`, `.delete-confirm-body`, etc.). No exceptions. This ensures uniform spacing across all modal screens.
+- **Modal inner padding**: **`1.25rem` (20px) - mandatory for ALL content areas inside modals** (`.modal-body`, `.source-step`, `.ai-step`, `.vivino-panel`, `.delete-confirm-body`, etc.). No exceptions. This ensures uniform spacing across all modal screens.
 - **Modal body gap**: `.9rem`
 - **Form row gap** (`.row2`): `.75rem`
 - **Button padding**: `.6rem 1rem` (standard), `.5rem 1.2rem` (small)
@@ -184,8 +184,8 @@ Fixed pixel heights for consistent vertical alignment:
 | `.8s` | `linear infinite` | Spinner rotation |
 
 ### Rule of thumb
-> **Micro-interactions** (hover, focus) → `.15s` – `.2s`
-> **Visible UI changes** (expand, reveal) → `.25s` – `.4s`
+> **Micro-interactions** (hover, focus) → `.15s` - `.2s`
+> **Visible UI changes** (expand, reveal) → `.25s` - `.4s`
 > **Animations** (progress, spin) → `.6s`+
 
 ---
@@ -267,9 +267,15 @@ Each theme defines: `--bg`, `--surface`, `--border`, `--accent`, `--accent2`, `-
 - [ ] Only use hardcoded red (`#e74c3c`) for danger/error states
 - [ ] Use `color-mix(in srgb, var(--accent) N%, transparent)` for transparent tints
 - [ ] Use the correct border-radius tier (container=12, popover=10, button=8, small=6, tag=4)
-- [ ] Modal content areas use `padding: 1.25rem` — no other value, no exceptions
+- [ ] Modal content areas use `padding: 1.25rem` - no other value, no exceptions
 - [ ] Use `var(--surface)` for elevated backgrounds, `var(--bg)` for recessed backgrounds
 - [ ] Use `var(--border)` for all borders and dividers
 - [ ] Use `var(--text)` for primary text, `var(--muted)` for secondary text
-- [ ] Keep transitions under `.2s` for hover, `.3s`–`.4s` for visible changes
+- [ ] Keep transitions under `.2s` for hover, `.3s`-`.4s` for visible changes
 - [ ] Test in all 6 themes × dark + light mode
+
+---
+
+## Text Conventions
+
+- **Dashes**: Always use a plain hyphen-minus (`-`), never em-dashes (`—`) or en-dashes (`–`) - in code, commits, README, docs, and UI strings
