@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0
+
+- **Chat image upload** - attach photos directly in the chat to reference wine labels, menus, or bottles when chatting with the AI assistant
+- **Stock history chart** - the statistics page now shows a smooth area chart visualizing how your cellar stock has changed over time, with improved tooltips
+- **Search by year and grape** - the wine search now also matches against vintage year and grape variety, making it easier to find specific bottles
+- **Landing page SEO** - added LLMs.txt metadata support to the landing page for better discoverability
+
 ## 1.7.1
 
 - **Fix: Globe not rendering** — pin COBE library to v0.6.3 after upstream v2.0 breaking change (released 2026-03-18)
