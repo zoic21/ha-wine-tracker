@@ -29,6 +29,10 @@
     <a href="{{ ingress }}/stats" class="nav-menu-item">{{ t.stats_title }}</a>
   </div>
   <div class="header-spacer"></div>
+  <div id="bottleCountBadge">
+    <i class="mdi mdi-bottle-wine"></i>
+    <span id="bottleCountNum">{{ wines|sum(attribute='quantity') }}</span> {{ t.bottles_abbr }}
+  </div>
   <div class="search-wrap">
     <i class="mdi mdi-magnify search-icon"></i>
     <input type="text" id="searchInput" placeholder="{{ t.search_placeholder }}" autocomplete="off" oninput="debouncedFilter()">
@@ -454,7 +458,7 @@ function applyFilters() {
 
     var visible = typeOk && searchOk && dwOk && emptyOk;
     card.style.display = visible ? '' : 'none';
-    if (visible) visibleCount++;
+    if (visible) visibleCount += parseInt(d.quantity) || 0;
   });
 
   // Sync table row visibility if table view is active
@@ -477,6 +481,8 @@ function applyFilters() {
   }
 
   // Update search-clear button visibility
+  var countEl = document.getElementById('bottleCountNum');
+  if (countEl) countEl.textContent = visibleCount;
   var clearBtn = document.querySelector('.search-clear');
   if (clearBtn) clearBtn.style.display = query ? 'block' : '';
 
