@@ -1431,15 +1431,9 @@ def _build_wine_cellar_context():
         if w.get("type"):       parts.append(f"Typ: {w['type']}")
         if w.get("region"):     parts.append(f"Region: {w['region']}")
         if w.get("grape"):      parts.append(f"Rebsorte: {w['grape']}")
-        if w.get("rating"):     parts.append(f"Bewertung: {w['rating']}/5")
-        if w.get("quantity"):   parts.append(f"Menge: {w['quantity']} Fl.")
         if w.get("drink_from") or w.get("drink_until"):
             parts.append(f"Trinkfenster: {w.get('drink_from', '?')}-{w.get('drink_until', '?')}")
         if w.get("notes"):      parts.append(f"Notizen: {w['notes']}")
-        if w.get("price"):      parts.append(f"Preis: {w['price']}")
-        if w.get("location"):   parts.append(f"Lagerort: {w['location']}")
-        if w.get("bottle_format") and w["bottle_format"] != 0.75:
-            parts.append(f"Format: {w['bottle_format']}L")
         lines.append(" | ".join(parts))
     return "\n".join(lines), len(wines)
 
